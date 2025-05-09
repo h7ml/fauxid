@@ -25,48 +25,64 @@ const ThemeSwitcher = () => {
     return null;
   }
 
-  const ICON_SIZE = 16;
+  const ICON_SIZE = 18;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full bg-primary/5 hover:bg-primary/10 transition-colors"
+        >
           {theme === "light" ? (
             <Sun
               key="light"
               size={ICON_SIZE}
-              className={"text-muted-foreground"}
+              className="text-primary transition-transform duration-300 rotate-0"
             />
           ) : theme === "dark" ? (
             <Moon
               key="dark"
               size={ICON_SIZE}
-              className={"text-muted-foreground"}
+              className="text-primary transition-transform duration-300 rotate-0"
             />
           ) : (
             <Laptop
               key="system"
               size={ICON_SIZE}
-              className={"text-muted-foreground"}
+              className="text-primary transition-transform duration-300 rotate-0"
             />
           )}
+          <span className="sr-only">切换主题</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
+      <DropdownMenuContent align="end" className="animate-slideUp min-w-32">
         <DropdownMenuRadioGroup
           value={theme}
           onValueChange={(e) => setTheme(e)}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
+          <DropdownMenuRadioItem
+            className="flex items-center gap-2 cursor-pointer"
+            value="light"
+          >
+            <Sun size={ICON_SIZE - 2} className="text-amber-500" />{" "}
             <span>浅色</span>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
+
+          <DropdownMenuRadioItem
+            className="flex items-center gap-2 cursor-pointer"
+            value="dark"
+          >
+            <Moon size={ICON_SIZE - 2} className="text-blue-500" />{" "}
             <span>深色</span>
           </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
+
+          <DropdownMenuRadioItem
+            className="flex items-center gap-2 cursor-pointer"
+            value="system"
+          >
+            <Laptop size={ICON_SIZE - 2} className="text-emerald-500" />{" "}
             <span>系统</span>
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
