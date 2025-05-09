@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: 5 * 1024 * 1024, // 5MB
     },
   },
+  images: {
+    domains: [
+      'avatars.dicebear.com',
+      'robohash.org',
+      'xsgames.co'
+    ],
+  },
 };
 
 export default nextConfig;

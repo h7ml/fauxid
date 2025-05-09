@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateIdentity, generateMultipleIdentitiesAction } from "@/app/actions/identity-actions";
 import { IdentityType, Gender, Country } from "@/lib/types";
-import { COUNTRY_INFO } from "@/lib/country-configs";
+import { COUNTRY_INFO, US_STATES } from "@/lib/country-configs";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,11 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
   const [isGenerating, setIsGenerating] = useState(false);
   const [useMultiple, setUseMultiple] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<Country>("CN");
+  const [generateAvatar, setGenerateAvatar] = useState(true);
+  const [generateCreditCard, setGenerateCreditCard] = useState(true);
+  const [generateSocialMedia, setGenerateSocialMedia] = useState(true);
+  const { toast } = useToast();
 
   // 区域选项
   const regionOptions = [
@@ -37,27 +43,88 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
     setError(null);
 
     try {
+      // 为调试添加一些额外的参数到表单中
+      formData.append("generate_avatar", generateAvatar.toString());
+      formData.append("generate_credit_card", generateCreditCard.toString());
+      formData.append("generate_social_media", generateSocialMedia.toString());
+
       let result;
 
       if (useMultiple) {
+        const count = parseInt(formData.get("count") as string || "5");
+        toast({
+          title: "正在生成虚拟身份",
+          description: `正在生成 ${count} 个虚拟身份，请稍候...`,
+        });
+
         result = await generateMultipleIdentitiesAction(formData);
-        if (result.success && onGenerate) {
-          onGenerate(result.data);
+        if (Array.isArray(result)) {
+          // 成功生成多个身份
+          toast({
+            title: "生成成功",
+            description: `已成功生成 ${result.length} 个虚拟身份`,
+          });
+
+          if (onGenerate) {
+            onGenerate(result);
+          }
+          window.location.reload(); // 强制刷新页面以显示新生成的身份
+        } else {
+          // 处理可能的错误对象
+          const errorMessage = typeof result === 'object' && result !== null && 'error' in result
+            ? String((result as any).error)
+            : "未知错误";
+          setError(`生成身份时出错: ${errorMessage}`);
+          console.error("生成多个身份失败:", result);
+
+          toast({
+            title: "生成失败",
+            description: errorMessage,
+            variant: "destructive",
+          });
         }
       } else {
+        toast({
+          title: "正在生成虚拟身份",
+          description: "正在生成虚拟身份，请稍候...",
+        });
+
         result = await generateIdentity(formData);
-        // 将单个身份结果转换为数组，以便统一处理
-        if (result.success && onGenerate) {
-          onGenerate([result.data]);
+        if (result && typeof result === 'object' && 'id' in result) {
+          // 成功生成单个身份
+          toast({
+            title: "生成成功",
+            description: `已成功生成身份: ${result.name}`,
+          });
+
+          if (onGenerate) {
+            onGenerate([result]);
+          }
+          window.location.reload(); // 强制刷新页面以显示新生成的身份
+        } else {
+          // 处理可能的错误对象
+          const errorMessage = typeof result === 'object' && result !== null && 'error' in result
+            ? String((result as any).error)
+            : "未知错误";
+          setError(`生成身份时出错: ${errorMessage}`);
+          console.error("生成单个身份失败:", result);
+
+          toast({
+            title: "生成失败",
+            description: errorMessage,
+            variant: "destructive",
+          });
         }
       }
-
-      if (!result.success) {
-        setError(result.error || "生成身份时出错");
-      }
     } catch (error) {
-      console.error("生成身份时出错:", error);
-      setError("生成身份时发生错误");
+      console.error("生成身份时发生异常:", error);
+      setError(`生成身份时发生错误: ${error instanceof Error ? error.message : String(error)}`);
+
+      toast({
+        title: "生成失败",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -73,7 +140,11 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
           {/* 选择国家 */}
           <div className="space-y-2">
             <Label htmlFor="country">国家</Label>
-            <Select name="country" defaultValue="CN">
+            <Select
+              name="country"
+              defaultValue="CN"
+              onValueChange={(value) => setSelectedCountry(value as Country)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="选择国家" />
               </SelectTrigger>
@@ -102,24 +173,46 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
             </Select>
           </div>
 
-          {/* 地区选择 */}
-          <div className="space-y-2">
-            <Label htmlFor="region">地区</Label>
-            <Select name="region">
-              <SelectTrigger>
-                <SelectValue placeholder="选择地区 (中国)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="random">随机</SelectItem>
-                {regionOptions.map((region) => (
-                  <SelectItem key={region} value={region}>
-                    {region}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">仅在选择中国时有效</p>
-          </div>
+          {/* 地区选择 - 中国 */}
+          {selectedCountry === "CN" && (
+            <div className="space-y-2">
+              <Label htmlFor="region">地区</Label>
+              <Select name="region">
+                <SelectTrigger>
+                  <SelectValue placeholder="选择地区 (中国)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="random">随机</SelectItem>
+                  {regionOptions.map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {region}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">仅在选择中国时有效</p>
+            </div>
+          )}
+
+          {/* 州选择 - 美国 */}
+          {selectedCountry === "US" && (
+            <div className="space-y-2">
+              <Label htmlFor="region">州</Label>
+              <Select name="region">
+                <SelectTrigger>
+                  <SelectValue placeholder="选择州 (美国)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="random">随机</SelectItem>
+                  {US_STATES.map((state) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* 年龄范围 */}
           <div className="grid grid-cols-2 gap-4">
@@ -146,6 +239,48 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
               />
             </div>
           </div>
+
+          {/* 美国特定选项 */}
+          {selectedCountry === "US" && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="occupation_category">职业类别</Label>
+                <Select name="occupation_category">
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择职业类别" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="random">随机</SelectItem>
+                    <SelectItem value="management">管理</SelectItem>
+                    <SelectItem value="business">商业</SelectItem>
+                    <SelectItem value="technology">技术</SelectItem>
+                    <SelectItem value="healthcare">医疗</SelectItem>
+                    <SelectItem value="education">教育</SelectItem>
+                    <SelectItem value="legal">法律</SelectItem>
+                    <SelectItem value="service">服务</SelectItem>
+                    <SelectItem value="construction">建筑</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="education_level">教育水平</Label>
+                <Select name="education_level">
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择教育水平" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="random">随机</SelectItem>
+                    <SelectItem value="high_school">高中</SelectItem>
+                    <SelectItem value="associates">副学士</SelectItem>
+                    <SelectItem value="bachelors">学士</SelectItem>
+                    <SelectItem value="masters">硕士</SelectItem>
+                    <SelectItem value="doctorate">博士</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           {/* 批量生成选项 */}
           <div className="flex items-center space-x-2 pt-2">
@@ -179,6 +314,37 @@ export default function IdentityGeneratorForm({ onGenerate }: IdentityGeneratorF
               </p>
             </div>
           )}
+
+          {/* 新增选项 */}
+          <div className="space-y-2">
+            <Label>附加信息</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="generate-avatar"
+                  checked={generateAvatar}
+                  onCheckedChange={(checked) => setGenerateAvatar(checked as boolean)}
+                />
+                <Label htmlFor="generate-avatar" className="cursor-pointer">生成头像</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="generate-credit-card"
+                  checked={generateCreditCard}
+                  onCheckedChange={(checked) => setGenerateCreditCard(checked as boolean)}
+                />
+                <Label htmlFor="generate-credit-card" className="cursor-pointer">生成信用卡信息</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="generate-social-media"
+                  checked={generateSocialMedia}
+                  onCheckedChange={(checked) => setGenerateSocialMedia(checked as boolean)}
+                />
+                <Label htmlFor="generate-social-media" className="cursor-pointer">生成社交媒体账号</Label>
+              </div>
+            </div>
+          </div>
 
           {/* 错误提示 */}
           {error && (

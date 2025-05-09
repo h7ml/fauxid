@@ -1,135 +1,217 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { GenerateIdentityOptions, IdentityType } from "@/lib/types";
+import { GenerateIdentityOptions, IdentityType, Country } from "@/lib/types";
 import { generateMultipleIdentities, generateRandomIdentity } from "@/lib/identity-generator";
 import { revalidatePath } from "next/cache";
 
 // 生成一个虚假身份
 export async function generateIdentity(formData: FormData) {
-  const options: GenerateIdentityOptions = {};
-  
-  // 获取表单参数
-  const gender = formData.get("gender") as string;
-  const ageMin = parseInt(formData.get("age_min") as string || "18");
-  const ageMax = parseInt(formData.get("age_max") as string || "70");
-  const region = formData.get("region") as string;
-  const country = formData.get("country") as string || "CN";
-  
-  if (gender && gender !== "random" && (gender === "男" || gender === "女")) {
-    options.gender = gender as any;
-  }
-  
-  if (!isNaN(ageMin)) {
-    options.age_min = ageMin;
-  }
-  
-  if (!isNaN(ageMax)) {
-    options.age_max = ageMax;
-  }
-  
-  if (region && region !== "random") {
-    options.region = region;
-  }
-  
-  if (country) {
-    options.country = country as any;
-  }
-  
-  // 生成身份信息
-  const identity = generateRandomIdentity(options);
-  
   try {
-    // 获取当前用户
+    const options: GenerateIdentityOptions = {};
+    
+    // 获取表单参数
+    const gender = formData.get("gender") as string;
+    const ageMin = parseInt(formData.get("age_min") as string || "18");
+    const ageMax = parseInt(formData.get("age_max") as string || "70");
+    const region = formData.get("region") as string;
+    const country = formData.get("country") as string || "CN";
+    const occupation_category = formData.get("occupation_category") as string;
+    const education_level = formData.get("education_level") as string;
+    
+    // 新增选项
+    const generate_avatar = formData.get("generate_avatar") === "true";
+    const generate_credit_card = formData.get("generate_credit_card") === "true";
+    const generate_social_media = formData.get("generate_social_media") === "true";
+    
+    console.log("生成身份参数:", {
+      gender,
+      ageMin,
+      ageMax,
+      region,
+      country,
+      occupation_category,
+      education_level,
+      generate_avatar,
+      generate_credit_card,
+      generate_social_media
+    });
+    
+    if (gender && gender !== "random" && (gender === "男" || gender === "女")) {
+      options.gender = gender;
+    }
+    
+    options.age_min = ageMin;
+    options.age_max = ageMax;
+    
+    if (region && region !== "random") {
+      options.region = region;
+    }
+    
+    options.country = country as Country;
+    
+    if (occupation_category) {
+      options.occupation_category = occupation_category;
+    }
+    
+    if (education_level) {
+      options.education_level = education_level;
+    }
+    
+    // 设置新增选项
+    options.generate_avatar = generate_avatar;
+    options.generate_credit_card = generate_credit_card;
+    options.generate_social_media = generate_social_media;
+    
+    console.log("开始生成身份...");
+    
+    // 生成身份
+    const identity = generateRandomIdentity(options);
+    
+    console.log("身份生成成功:", { 
+      id: identity.id,
+      name: identity.name, 
+      gender: identity.gender,
+      country: identity.country
+    });
+    
+    // 验证用户登录状态
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (user) {
-      // 将用户ID添加到身份信息中
-      identity.user_id = user.id;
-      
-      // 保存到数据库
-      const { error } = await supabase
-        .from("identities")
-        .insert(identity);
-      
-      if (error) {
-        console.error("保存身份信息失败:", error);
-        return { success: false, error: error.message, data: identity };
-      }
+    if (!user) {
+      return identity;
     }
     
-    revalidatePath("/");
-    return { success: true, data: identity };
-  } catch (error) {
-    console.error("生成身份时出错:", error);
-    return { success: false, error: "生成身份时发生错误", data: identity };
+    console.log("开始保存身份到数据库...");
+    
+    // 将身份保存到数据库
+    const { data, error } = await supabase
+      .from("identities")
+      .insert({
+        ...identity,
+        user_id: user.id
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("保存身份失败:", error);
+      console.error("尝试保存的身份数据:", JSON.stringify(identity));
+      return { error: `保存身份失败: ${error.message}` };
+    }
+    
+    console.log("身份已成功保存到数据库");
+    return data;
+  } catch (e) {
+    console.error("生成/保存身份时出错:", e);
+    return { error: `生成身份时发生错误: ${e instanceof Error ? e.message : String(e)}` };
   }
 }
 
 // 生成多个虚假身份
 export async function generateMultipleIdentitiesAction(formData: FormData) {
-  const options: GenerateIdentityOptions = {};
-  
-  // 获取表单参数
-  const count = parseInt(formData.get("count") as string || "5");
-  const gender = formData.get("gender") as string;
-  const ageMin = parseInt(formData.get("age_min") as string || "18");
-  const ageMax = parseInt(formData.get("age_max") as string || "70");
-  const region = formData.get("region") as string;
-  const country = formData.get("country") as string || "CN";
-  
-  if (gender && gender !== "random" && (gender === "男" || gender === "女")) {
-    options.gender = gender as any;
-  }
-  
-  if (!isNaN(ageMin)) {
-    options.age_min = ageMin;
-  }
-  
-  if (!isNaN(ageMax)) {
-    options.age_max = ageMax;
-  }
-  
-  if (region && region !== "random") {
-    options.region = region;
-  }
-  
-  if (country) {
-    options.country = country as any;
-  }
-  
-  // 生成身份信息
-  const identities = generateMultipleIdentities(Math.min(count, 50), options);
-  
   try {
-    // 获取当前用户
+    const count = parseInt(formData.get("count") as string || "1");
+    
+    // 构建生成选项
+    const options: GenerateIdentityOptions = {};
+    
+    const gender = formData.get("gender") as string;
+    const ageMin = parseInt(formData.get("age_min") as string || "18");
+    const ageMax = parseInt(formData.get("age_max") as string || "70");
+    const region = formData.get("region") as string;
+    const country = formData.get("country") as string || "CN";
+    const occupation_category = formData.get("occupation_category") as string;
+    const education_level = formData.get("education_level") as string;
+    
+    // 新增选项
+    const generate_avatar = formData.get("generate_avatar") === "true";
+    const generate_credit_card = formData.get("generate_credit_card") === "true";
+    const generate_social_media = formData.get("generate_social_media") === "true";
+    
+    console.log("批量生成身份参数:", {
+      count,
+      gender,
+      ageMin,
+      ageMax,
+      region,
+      country,
+      occupation_category,
+      education_level,
+      generate_avatar,
+      generate_credit_card,
+      generate_social_media
+    });
+    
+    if (gender && gender !== "random" && (gender === "男" || gender === "女")) {
+      options.gender = gender;
+    }
+    
+    options.age_min = ageMin;
+    options.age_max = ageMax;
+    
+    if (region && region !== "random") {
+      options.region = region;
+    }
+    
+    options.country = country as Country;
+    
+    if (occupation_category) {
+      options.occupation_category = occupation_category;
+    }
+    
+    if (education_level) {
+      options.education_level = education_level;
+    }
+    
+    // 设置新增选项
+    options.generate_avatar = generate_avatar;
+    options.generate_credit_card = generate_credit_card;
+    options.generate_social_media = generate_social_media;
+    
+    console.log(`开始生成 ${count} 个身份...`);
+    
+    // 生成多个身份
+    const identities: IdentityType[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      identities.push(generateRandomIdentity(options));
+    }
+    
+    console.log(`已成功生成 ${identities.length} 个身份`);
+    
+    // 验证用户登录状态
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (user) {
-      // 将用户ID添加到身份信息中
-      const identitiesWithUser = identities.map(identity => ({
-        ...identity,
-        user_id: user.id
-      }));
-      
-      // 保存到数据库
-      const { error } = await supabase
-        .from("identities")
-        .insert(identitiesWithUser);
-      
-      if (error) {
-        console.error("保存多个身份信息失败:", error);
-        return { success: false, error: error.message, data: identities };
-      }
+    if (!user) {
+      return identities;
     }
     
-    revalidatePath("/");
-    return { success: true, data: identities };
-  } catch (error) {
-    console.error("生成多个身份时出错:", error);
-    return { success: false, error: "生成多个身份时发生错误", data: identities };
+    console.log("开始批量保存身份到数据库...");
+    
+    // 将身份保存到数据库
+    const { data, error } = await supabase
+      .from("identities")
+      .insert(
+        identities.map(identity => ({
+          ...identity,
+          user_id: user.id
+        }))
+      )
+      .select();
+    
+    if (error) {
+      console.error("批量保存身份失败:", error);
+      return { error: `批量保存身份失败: ${error.message}` };
+    }
+    
+    console.log(`${data.length} 个身份已成功保存到数据库`);
+    return data;
+  } catch (e) {
+    console.error("批量生成/保存身份时出错:", e);
+    return { error: `批量生成身份时发生错误: ${e instanceof Error ? e.message : String(e)}` };
   }
 }
 

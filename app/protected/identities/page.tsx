@@ -35,6 +35,9 @@ export default async function IdentitiesPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">虚拟身份管理</h1>
         <p className="text-muted-foreground">生成和管理您的虚拟身份信息</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          现已支持美国、中国等多国身份信息生成，包括姓名、地址、SSN和职业等完整信息
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

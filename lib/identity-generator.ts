@@ -1,4 +1,4 @@
-import { Country, Gender, GenerateIdentityOptions, IdentityType } from "./types";
+import { Country, Gender, GenerateIdentityOptions, IdentityType, CreditCardInfo, SocialMediaInfo } from "./types";
 import { v4 as uuidv4 } from 'uuid';
 import {
   COUNTRY_INFO,
@@ -81,6 +81,60 @@ const CITIES: Record<string, string[]> = {
   '杭州': ['西湖区', '拱墅区', '上城区', '下城区', '江干区'],
 };
 
+// 美国各城市 - 扩展更多城市
+const US_CITIES: Record<string, string[]> = {
+  'Alabama': ['Birmingham', 'Montgomery', 'Mobile', 'Huntsville', 'Tuscaloosa', 'Auburn', 'Hoover', 'Dothan', 'Decatur', 'Gadsden'],
+  'Alaska': ['Anchorage', 'Fairbanks', 'Juneau', 'Sitka', 'Ketchikan', 'Wasilla', 'Kenai', 'Kodiak', 'Bethel', 'Palmer'],
+  'Arizona': ['Phoenix', 'Tucson', 'Mesa', 'Chandler', 'Scottsdale', 'Glendale', 'Gilbert', 'Tempe', 'Peoria', 'Surprise'],
+  'California': ['Los Angeles', 'San Francisco', 'San Diego', 'San Jose', 'Sacramento', 'Oakland', 'Fresno', 'Long Beach', 'Bakersfield', 'Anaheim', 'Santa Ana', 'Riverside', 'Irvine', 'San Bernardino'],
+  'Colorado': ['Denver', 'Colorado Springs', 'Aurora', 'Fort Collins', 'Lakewood', 'Thornton', 'Arvada', 'Westminster', 'Pueblo', 'Centennial'],
+  'Florida': ['Miami', 'Orlando', 'Tampa', 'Jacksonville', 'St. Petersburg', 'Hialeah', 'Tallahassee', 'Fort Lauderdale', 'Port St. Lucie', 'Cape Coral', 'Pembroke Pines'],
+  'Georgia': ['Atlanta', 'Savannah', 'Augusta', 'Columbus', 'Macon', 'Athens', 'Sandy Springs', 'Roswell', 'Albany', 'Johns Creek'],
+  'New York': ['New York City', 'Buffalo', 'Rochester', 'Syracuse', 'Albany', 'Yonkers', 'New Rochelle', 'Mount Vernon', 'Schenectady', 'Utica'],
+  'Texas': ['Houston', 'Dallas', 'San Antonio', 'Austin', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi', 'Plano', 'Laredo', 'Lubbock', 'Garland', 'Irving', 'Amarillo'],
+  'Washington': ['Seattle', 'Spokane', 'Tacoma', 'Vancouver', 'Bellevue', 'Kent', 'Everett', 'Renton', 'Yakima', 'Federal Way'],
+  'Illinois': ['Chicago', 'Aurora', 'Naperville', 'Joliet', 'Rockford', 'Springfield', 'Peoria', 'Elgin', 'Waukegan', 'Cicero'],
+  'Pennsylvania': ['Philadelphia', 'Pittsburgh', 'Allentown', 'Erie', 'Reading', 'Scranton', 'Bethlehem', 'Lancaster', 'Harrisburg', 'Altoona'],
+  'Ohio': ['Columbus', 'Cleveland', 'Cincinnati', 'Toledo', 'Akron', 'Dayton', 'Parma', 'Canton', 'Youngstown', 'Lorain'],
+  'Michigan': ['Detroit', 'Grand Rapids', 'Warren', 'Sterling Heights', 'Ann Arbor', 'Lansing', 'Flint', 'Dearborn', 'Livonia', 'Westland'],
+  'Massachusetts': ['Boston', 'Worcester', 'Springfield', 'Lowell', 'Cambridge', 'New Bedford', 'Brockton', 'Quincy', 'Lynn', 'Fall River']
+};
+
+// 美国街道名称
+const US_STREET_NAMES = [
+  'Main', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Oak', 'Pine', 'Maple', 'Cedar', 'Elm', 'Washington',
+  'Lincoln', 'Jefferson', 'Roosevelt', 'Madison', 'Adams', 'Jackson', 'Monroe', 'Franklin', 'Wilson',
+  'Park', 'Lake', 'Hill', 'River', 'Valley', 'Forest', 'Meadow', 'Garden', 'Wood', 'Sunset', 'Sunrise'
+];
+
+// 美国街道类型
+const US_STREET_TYPES = [
+  'St', 'Ave', 'Blvd', 'Dr', 'Ln', 'Rd', 'Way', 'Pl', 'Ct', 'Terrace', 'Circle', 'Highway', 'Junction'
+];
+
+// 美国职业类别
+const US_OCCUPATIONS: Record<string, string[]> = {
+  'management': ['Manager', 'Director', 'CEO', 'President', 'Supervisor', 'Executive', 'Administrator'],
+  'business': ['Accountant', 'Financial Analyst', 'Marketing Specialist', 'Sales Representative', 'Consultant'],
+  'technology': ['Software Developer', 'System Administrator', 'IT Specialist', 'Database Administrator', 'Web Developer'],
+  'healthcare': ['Doctor', 'Nurse', 'Physical Therapist', 'Dentist', 'Pharmacist', 'Medical Assistant'],
+  'education': ['Teacher', 'Professor', 'Principal', 'Librarian', 'School Counselor', 'Tutor'],
+  'legal': ['Lawyer', 'Judge', 'Paralegal', 'Legal Assistant', 'Attorney'],
+  'service': ['Waiter/Waitress', 'Chef', 'Bartender', 'Hairstylist', 'Flight Attendant', 'Receptionist'],
+  'construction': ['Carpenter', 'Electrician', 'Plumber', 'Construction Worker', 'Painter', 'Contractor']
+};
+
+// 美国学历
+const US_EDUCATION_LEVELS = [
+  'High School Diploma', 'Associate\'s Degree', 'Bachelor\'s Degree', 'Master\'s Degree', 'Doctorate', 'Professional Degree'
+];
+
+// 社交媒体平台
+const SOCIAL_MEDIA_PLATFORMS = ['Twitter', 'Instagram', 'Facebook', 'LinkedIn', 'TikTok', 'Pinterest', 'Snapchat', 'Reddit'];
+
+// 信用卡类型
+const CREDIT_CARD_TYPES = ['Visa', 'MasterCard', 'American Express', 'Discover'];
+
 // 随机生成中国身份证号
 function generateChineseIdNumber(gender: Gender, birthDate: Date, region: string = '北京'): string {
   // 获取地区编码
@@ -94,16 +148,17 @@ function generateChineseIdNumber(gender: Gender, birthDate: Date, region: string
   
   // 生成顺序码 (第15-17位)
   // 其中第17位奇数表示男性，偶数表示女性
-  const sequenceCode = Math.floor(Math.random() * 500).toString().padStart(3, '0');
-  let seq = parseInt(sequenceCode);
+  let seq = Math.floor(Math.random() * 500);
+  // 确保性别位正确
   if (gender === '男' && seq % 2 === 0) {
     seq += 1;
   } else if (gender === '女' && seq % 2 === 1) {
     seq += 1;
   }
+  const sequenceCode = seq.toString().padStart(3, '0');
   
   // 组合前17位
-  const idBase = regionCode + areaCode + birthCode + seq.toString().padStart(3, '0');
+  const idBase = regionCode + areaCode + birthCode + sequenceCode;
   
   // 计算校验位（第18位）
   const weights = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -341,17 +396,28 @@ function generateAddress(country: Country, region?: string): string {
     }
     case 'US': {
       const streetNumber = Math.floor(Math.random() * 9900) + 100;
-      const streetTypes = ['St', 'Ave', 'Blvd', 'Dr', 'Ln', 'Rd', 'Way', 'Pl'];
-      const streetNames = ['Main', 'Oak', 'Pine', 'Maple', 'Cedar', 'Washington', 'Lincoln', 'Park'];
+      const streetName = US_STREET_NAMES[Math.floor(Math.random() * US_STREET_NAMES.length)];
+      const streetType = US_STREET_TYPES[Math.floor(Math.random() * US_STREET_TYPES.length)];
       
-      const streetName = streetNames[Math.floor(Math.random() * streetNames.length)];
-      const streetType = streetTypes[Math.floor(Math.random() * streetTypes.length)];
-      const stateIndex = Math.floor(Math.random() * US_STATES.length);
-      const state = US_STATES[stateIndex];
+      // 使用提供的州或随机选择一个州
+      const state = region && US_STATES.includes(region) 
+        ? region 
+        : US_STATES[Math.floor(Math.random() * US_STATES.length)];
+        
+      const stateIndex = US_STATES.indexOf(state);
       const stateAbbr = US_STATE_ABBREVIATIONS[stateIndex];
       
+      // 获取该州的城市或使用随机城市
+      let city;
+      if (US_CITIES[state]) {
+        city = US_CITIES[state][Math.floor(Math.random() * US_CITIES[state].length)];
+      } else {
+        // 如果没有该州的城市数据，使用随机城市名
+        const randomCities = ['Springfield', 'Franklin', 'Clinton', 'Georgetown', 'Salem', 'Madison'];
+        city = randomCities[Math.floor(Math.random() * randomCities.length)];
+      }
+      
       const zipCode = Math.floor(Math.random() * 90000) + 10000;
-      const city = ['Springfield', 'Franklin', 'Clinton', 'Georgetown', 'Salem', 'Madison'][Math.floor(Math.random() * 6)];
       
       return `${streetNumber} ${streetName} ${streetType}, ${city}, ${stateAbbr} ${zipCode}`;
     }
@@ -520,6 +586,181 @@ function getNationality(country: Country): string {
   return nationalities[country] || '中国';
 }
 
+// 生成美国驾照号码
+function generateUSDriversLicense(state: string): string {
+  const stateAbbr = US_STATE_ABBREVIATIONS[US_STATES.indexOf(state)] || US_STATE_ABBREVIATIONS[Math.floor(Math.random() * US_STATE_ABBREVIATIONS.length)];
+  
+  switch(stateAbbr) {
+    case 'CA': // 加利福尼亚州：1个字母+ 7个数字
+      return `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 10000000).toString().padStart(7, '0')}`;
+    case 'TX': // 德克萨斯州：8个数字
+      return Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+    case 'FL': // 佛罗里达州：1个字母+ 12个数字
+      return `${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0')}`;
+    case 'NY': // 纽约州：9个数字
+      return Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+    default: // 默认格式：2个字母+ 6个数字
+      const letter1 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      const letter2 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      return `${letter1}${letter2}${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+  }
+}
+
+// 生成信用卡信息
+function generateCreditCard(): CreditCardInfo {
+  const cardType = CREDIT_CARD_TYPES[Math.floor(Math.random() * CREDIT_CARD_TYPES.length)];
+  
+  let prefix = '';
+  let length = 16;
+  
+  switch(cardType) {
+    case 'Visa':
+      prefix = '4';
+      length = 16;
+      break;
+    case 'MasterCard':
+      prefix = `5${Math.floor(Math.random() * 5) + 1}`;
+      length = 16;
+      break;
+    case 'American Express':
+      prefix = `3${Math.floor(Math.random() * 2) + 4}`;
+      length = 15;
+      break;
+    case 'Discover':
+      prefix = '6011';
+      length = 16;
+      break;
+  }
+  
+  // 生成剩余数字
+  let cardNumber = prefix;
+  const remaining = length - prefix.length;
+  
+  for (let i = 0; i < remaining; i++) {
+    cardNumber += Math.floor(Math.random() * 10).toString();
+  }
+  
+  // 生成过期日期 (1-12月，当前年份+1到当前年份+5)
+  const currentYear = new Date().getFullYear();
+  const month = Math.floor(Math.random() * 12) + 1;
+  const year = currentYear + Math.floor(Math.random() * 5) + 1;
+  const expiration = `${month.toString().padStart(2, '0')}/${(year % 100).toString()}`;
+  
+  // 生成CVV
+  const cvvLength = cardType === 'American Express' ? 4 : 3;
+  let cvv = '';
+  for (let i = 0; i < cvvLength; i++) {
+    cvv += Math.floor(Math.random() * 10).toString();
+  }
+  
+  return {
+    number: cardNumber,
+    expiration,
+    cvv,
+    type: cardType
+  };
+}
+
+// 生成社交媒体账号
+function generateSocialMedia(name: string): SocialMediaInfo[] {
+  const accounts: SocialMediaInfo[] = [];
+  const platforms = [...SOCIAL_MEDIA_PLATFORMS];
+  
+  // 随机选择2-4个平台
+  const numAccounts = Math.floor(Math.random() * 3) + 2;
+  
+  for (let i = 0; i < numAccounts && platforms.length > 0; i++) {
+    const randomIndex = Math.floor(Math.random() * platforms.length);
+    const platform = platforms[randomIndex];
+    
+    // 从剩余平台中移除已选择的平台
+    platforms.splice(randomIndex, 1);
+    
+    // 创建用户名，不同平台有不同格式
+    let username = name.toLowerCase().replace(/\s+/g, '');
+    
+    // 添加随机数字或特殊字符
+    if (Math.random() > 0.5) {
+      username += Math.floor(Math.random() * 1000);
+    } else {
+      const separators = ['_', '.', '-'];
+      const separator = separators[Math.floor(Math.random() * separators.length)];
+      const nameParts = name.split(' ');
+      
+      if (nameParts.length > 1) {
+        username = `${nameParts[0].toLowerCase()}${separator}${nameParts[1].toLowerCase()}`;
+        if (Math.random() > 0.7) {
+          username += Math.floor(Math.random() * 100);
+        }
+      }
+    }
+    
+    let url;
+    switch(platform) {
+      case 'Twitter':
+        url = `https://twitter.com/${username}`;
+        break;
+      case 'Instagram':
+        url = `https://instagram.com/${username}`;
+        break;
+      case 'Facebook':
+        url = `https://facebook.com/${username}`;
+        break;
+      case 'LinkedIn':
+        url = `https://linkedin.com/in/${username}`;
+        break;
+      case 'TikTok':
+        url = `https://tiktok.com/@${username}`;
+        break;
+      case 'Pinterest':
+        url = `https://pinterest.com/${username}`;
+        break;
+      case 'Reddit':
+        url = `https://reddit.com/user/${username}`;
+        break;
+      case 'Snapchat':
+        url = null; // Snapchat doesn't have public profile URLs
+        break;
+    }
+    
+    accounts.push({
+      username,
+      platform,
+      url: url || undefined
+    });
+  }
+  
+  return accounts;
+}
+
+// 生成头像URL (使用一些免费的头像生成服务)
+function generateAvatar(gender: Gender): string {
+  const style = Math.floor(Math.random() * 3) + 1; // 不同的头像风格
+  const seed = Math.floor(Math.random() * 1000); // 随机种子
+  
+  // 使用不同的免费头像生成服务
+  const serviceType = Math.floor(Math.random() * 3);
+  
+  switch(serviceType) {
+    case 0:
+      // DiceBear Avatars
+      const dicebearStyle = ['adventurer', 'adventurer-neutral', 'avataaars', 'big-ears', 'bottts', 'croodles', 'identicon', 'initials', 'micah'][Math.floor(Math.random() * 9)];
+      return `https://avatars.dicebear.com/api/${dicebearStyle}/${seed}.svg`;
+    case 1:
+      // RoboHash (有趣的机器人头像)
+      return `https://robohash.org/${seed}?set=set${style}`;
+    case 2:
+    default:
+      // 基于性别的卡通头像 - 修复URL参数格式
+      const genderParam = gender === '男' ? 'male' : 'female';
+      // 使用更安全的URL构建方式
+      const url = new URL('https://xsgames.co/randomusers/avatar.php');
+      url.searchParams.append('g', genderParam);
+      url.searchParams.append('random', seed.toString());
+      return url.toString();
+  }
+}
+
 // 主函数：生成虚假身份
 export function generateRandomIdentity(options: GenerateIdentityOptions = {}): IdentityType {
   // 确定国家
@@ -560,10 +801,54 @@ export function generateRandomIdentity(options: GenerateIdentityOptions = {}): I
   const nationality = getNationality(country);
   
   // 生成职业
-  const occupation = OCCUPATIONS[Math.floor(Math.random() * OCCUPATIONS.length)];
+  let occupation;
+  if (country === 'US' && options.occupation_category && US_OCCUPATIONS[options.occupation_category]) {
+    // 使用指定的职业类别选择职业
+    const careers = US_OCCUPATIONS[options.occupation_category];
+    occupation = careers[Math.floor(Math.random() * careers.length)];
+  } else {
+    occupation = OCCUPATIONS[Math.floor(Math.random() * OCCUPATIONS.length)];
+  }
   
   // 生成教育水平
-  const education = EDUCATION_LEVELS[Math.floor(Math.random() * EDUCATION_LEVELS.length)];
+  let education;
+  if (country === 'US' && options.education_level && options.education_level !== 'random') {
+    // 映射前端选项到具体的教育水平
+    const educationMapping: Record<string, string> = {
+      'high_school': 'High School Diploma',
+      'associates': 'Associate\'s Degree',
+      'bachelors': 'Bachelor\'s Degree',
+      'masters': 'Master\'s Degree',
+      'doctorate': 'Doctorate'
+    };
+    education = educationMapping[options.education_level] || US_EDUCATION_LEVELS[Math.floor(Math.random() * US_EDUCATION_LEVELS.length)];
+  } else {
+    education = EDUCATION_LEVELS[Math.floor(Math.random() * EDUCATION_LEVELS.length)];
+  }
+  
+  // 生成美国驾照号码 (仅当国家是美国时)
+  let driversLicense;
+  if (country === 'US') {
+    driversLicense = generateUSDriversLicense(region || 'California');
+  }
+  
+  // 生成信用卡信息
+  let creditCard;
+  if (options.generate_credit_card !== false) {
+    creditCard = generateCreditCard();
+  }
+  
+  // 生成社交媒体账号
+  let socialMedia;
+  if (options.generate_social_media !== false) {
+    socialMedia = generateSocialMedia(name);
+  }
+  
+  // 生成头像URL
+  let avatarUrl;
+  if (options.generate_avatar !== false) {
+    avatarUrl = generateAvatar(gender);
+  }
   
   return {
     id: uuidv4(),
@@ -580,7 +865,11 @@ export function generateRandomIdentity(options: GenerateIdentityOptions = {}): I
     favorite: false,
     country,
     nationality,
-    passport_number: passportNumber
+    passport_number: passportNumber,
+    drivers_license: driversLicense,
+    credit_card: creditCard,
+    social_media: socialMedia,
+    avatar_url: avatarUrl
   };
 }
 

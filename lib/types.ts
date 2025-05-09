@@ -8,6 +8,19 @@ export interface CountryInfo {
   idNumberName: string;
 }
 
+export type CreditCardInfo = {
+  number: string;
+  expiration: string;
+  cvv: string;
+  type: string; // Visa, MasterCard, etc.
+};
+
+export type SocialMediaInfo = {
+  username: string;
+  platform: string; // Twitter, Instagram, Facebook, etc.
+  url?: string;
+};
+
 export type IdentityType = {
   id: string;
   user_id?: string;
@@ -27,6 +40,10 @@ export type IdentityType = {
   passport_number?: string;
   notes?: string;
   tags?: string[];
+  drivers_license?: string;
+  credit_card?: CreditCardInfo;
+  social_media?: SocialMediaInfo[];
+  avatar_url?: string;
 };
 
 export type BasicUserProfile = {
@@ -41,4 +58,9 @@ export type GenerateIdentityOptions = {
   age_max?: number;
   region?: string;
   country?: Country;
+  occupation_category?: string;
+  education_level?: string;
+  generate_avatar?: boolean;
+  generate_credit_card?: boolean;
+  generate_social_media?: boolean;
 }; 

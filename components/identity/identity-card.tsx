@@ -8,6 +8,7 @@ import { COUNTRY_INFO } from "@/lib/country-configs";
 import { toggleFavorite, deleteIdentity } from "@/app/actions/identity-actions";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Calendar,
   GraduationCap,
@@ -21,8 +22,14 @@ import {
   Copy,
   ExternalLink,
   Star,
-  StarOff
+  StarOff,
+  Flag,
+  CreditCard,
+  BookOpen,
+  Car,
+  Globe
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface IdentityCardProps {
   identity: IdentityType;
@@ -35,181 +42,302 @@ export default function IdentityCard({
   showActions = true,
   onDelete
 }: IdentityCardProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isFavorite, setIsFavorite] = useState(identity.favorite || false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
+  // 计算年龄
   const birthYear = new Date(identity.birth_date).getFullYear();
   const currentYear = new Date().getFullYear();
   const age = currentYear - birthYear;
 
-  const formattedBirthDate = new Date(identity.birth_date).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // 处理收藏状态切换
+  const handleToggleFavorite = async () => {
+    const formData = new FormData();
+    formData.append("id", identity.id);
+    formData.append("favorite", (!isFavorite).toString());
 
-  // 获取国家信息
-  const countryInfo = COUNTRY_INFO[identity.country as Country] || COUNTRY_INFO.CN;
-
-  async function handleToggleFavorite() {
-    setIsProcessing(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("id", identity.id);
-      formData.append("favorite", isFavorite.toString());
-
-      const result = await toggleFavorite(formData);
-
-      if (result.success) {
-        setIsFavorite(!isFavorite);
-      }
-    } catch (error) {
-      console.error("切换收藏状态失败:", error);
-    } finally {
-      setIsProcessing(false);
+    const result = await toggleFavorite(formData);
+    if (result.success) {
+      setIsFavorite(!isFavorite);
+      toast({
+        title: isFavorite ? "已取消收藏" : "已添加到收藏",
+        description: `身份 "${identity.name}" ${isFavorite ? "已从收藏中移除" : "已添加到收藏"}`,
+        variant: "default",
+      });
     }
-  }
+  };
 
-  async function handleDelete() {
-    if (!confirm("确定要删除这个身份信息吗？")) {
-      return;
-    }
+  // 处理身份删除
+  const handleDelete = async () => {
+    if (confirm("确定要删除这个身份吗？")) {
+      setIsDeleting(true);
 
-    setIsProcessing(true);
-
-    try {
       const formData = new FormData();
       formData.append("id", identity.id);
 
       const result = await deleteIdentity(formData);
-
-      if (result.success && onDelete) {
-        onDelete();
+      if (result.success) {
+        toast({
+          title: "删除成功",
+          description: `身份 "${identity.name}" 已被删除`,
+          variant: "default",
+        });
+        onDelete?.();
+      } else {
+        setIsDeleting(false);
+        toast({
+          title: "删除失败",
+          description: result.error || "未知错误",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("删除身份信息失败:", error);
-    } finally {
-      setIsProcessing(false);
     }
-  }
+  };
+
+  // 复制文本并显示提示
+  const copyToClipboard = (text: string, description: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "复制成功",
+      description: description,
+      variant: "default",
+    });
+  };
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col hover-card-effect card theme-transition">
-      <CardHeader className="bg-primary/5 pb-3 flex-shrink-0 border-b border-border/30">
-        <div className="flex justify-between items-start">
+    <Card className="w-full overflow-hidden relative">
+      {/* 头像显示 */}
+      {identity.avatar_url && (
+        <div className="w-full h-40 bg-muted relative overflow-hidden">
+          <Image
+            src={identity.avatar_url}
+            alt={identity.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 33vw"
+          />
+        </div>
+      )}
+
+      <CardHeader>
+        <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 flex-wrap">
-              {identity.name}
-              <Badge variant="outline" className="text-xs font-normal">{countryInfo.name}</Badge>
-            </CardTitle>
-            <CardDescription className="mt-1">{age}岁 | {identity.gender} | {identity.occupation || "未知职业"}</CardDescription>
+            <CardTitle>{identity.name}</CardTitle>
+            <CardDescription className="flex items-center mt-1">
+              <Calendar className="w-4 h-4 mr-1" />
+              {identity.birth_date} ({age}岁)
+              <Flag className="w-4 h-4 ml-3 mr-1" />
+              {COUNTRY_INFO[identity.country]?.name || "未知"}
+              {identity.nationality && (
+                <span className="ml-1">({identity.nationality})</span>
+              )}
+            </CardDescription>
           </div>
+
           {showActions && (
             <Button
               variant="ghost"
               size="icon"
               onClick={handleToggleFavorite}
-              disabled={isProcessing}
-              className="h-8 w-8 flex-shrink-0 transition-colors"
+              className="h-8 w-8"
             >
               {isFavorite ? (
-                <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               ) : (
-                <Star className="w-4 h-4" />
+                <StarOff className="h-4 w-4" />
               )}
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-4 text-sm flex-grow">
-        <div className="grid grid-cols-1 gap-3">
-          <div className="flex items-start gap-3 group">
-            <Fingerprint className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span className="break-all">{identity.id_number}</span>
-          </div>
-          <div className="flex items-start gap-3 group">
-            <Calendar className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span>{formattedBirthDate}</span>
-          </div>
-          <div className="flex items-start gap-3 group">
-            <GraduationCap className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span>{identity.education || "未知"}</span>
-          </div>
-          <div className="flex items-start gap-3 group">
-            <Phone className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span>{identity.phone}</span>
-          </div>
-          <div className="flex items-start gap-3 group">
-            <Mail className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span className="break-all">{identity.email}</span>
-          </div>
-          <div className="flex items-start gap-3 group">
-            <Home className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-            <span className="break-all">{identity.address}</span>
-          </div>
 
-          {/* 标签显示 */}
-          {identity.tags && identity.tags.length > 0 && (
-            <div className="flex items-start gap-3 group">
-              <Tag className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-              <div className="flex flex-wrap gap-1">
-                {identity.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                ))}
+      <CardContent className="space-y-2">
+        <div className="text-sm flex items-center">
+          <Fingerprint className="w-4 h-4 mr-2" />
+          <span className="font-medium">
+            {COUNTRY_INFO[identity.country]?.idNumberName || "身份证号"}:
+          </span>
+          <span className="ml-2 truncate">{identity.id_number}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 ml-auto"
+            onClick={() => copyToClipboard(identity.id_number, "身份证号已复制到剪贴板")}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+
+        {identity.passport_number && (
+          <div className="text-sm flex items-center">
+            <BookOpen className="w-4 h-4 mr-2" />
+            <span className="font-medium">护照号码:</span>
+            <span className="ml-2 truncate">{identity.passport_number}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-auto"
+              onClick={() => {
+                if (identity.passport_number) {
+                  copyToClipboard(identity.passport_number, "护照号码已复制到剪贴板");
+                }
+              }}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
+        {identity.drivers_license && (
+          <div className="text-sm flex items-center">
+            <Car className="w-4 h-4 mr-2" />
+            <span className="font-medium">驾照号码:</span>
+            <span className="ml-2 truncate">{identity.drivers_license}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-auto"
+              onClick={() => {
+                if (identity.drivers_license) {
+                  copyToClipboard(identity.drivers_license, "驾照号码已复制到剪贴板");
+                }
+              }}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
+        {identity.credit_card && (
+          <div className="text-sm">
+            <div className="flex items-center">
+              <CreditCard className="w-4 h-4 mr-2" />
+              <span className="font-medium">信用卡:</span>
+              <span className="ml-2">{identity.credit_card.type}</span>
+            </div>
+            <div className="ml-6 text-sm mt-1">
+              <div className="flex items-center">
+                <span className="font-medium">卡号:</span>
+                <span className="ml-2 truncate">{identity.credit_card.number}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 ml-auto"
+                  onClick={() => {
+                    if (identity.credit_card) {
+                      copyToClipboard(identity.credit_card.number, "信用卡号已复制到剪贴板");
+                    }
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">有效期:</span>
+                  <span className="ml-2">{identity.credit_card.expiration}</span>
+                </div>
+                <div>
+                  <span className="font-medium">CVV:</span>
+                  <span className="ml-2">{identity.credit_card.cvv}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 ml-1"
+                    onClick={() => {
+                      if (identity.credit_card) {
+                        copyToClipboard(identity.credit_card.cvv, "CVV码已复制到剪贴板");
+                      }
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
-          )}
-
-          {/* 备注提示 */}
-          {identity.notes && (
-            <div className="flex items-start gap-3 group">
-              <FileText className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" />
-              <span className="text-muted-foreground italic">查看详情...</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      {showActions && (
-        <CardFooter className="flex justify-between border-t border-border/30 bg-muted/10 p-3 flex-shrink-0">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              const text = `姓名：${identity.name}\n性别：${identity.gender}\n年龄：${age}岁\n${countryInfo.idNumberName}：${identity.id_number}\n出生日期：${formattedBirthDate}\n职业：${identity.occupation || "未知"}\n教育程度：${identity.education || "未知"}\n联系电话：${identity.phone}\n电子邮箱：${identity.email}\n家庭住址：${identity.address}`;
-              navigator.clipboard.writeText(text);
-              alert("身份信息已复制到剪贴板");
-            }}
-            title="复制信息"
-            className="transition-colors"
-          >
-            <Copy className="w-4 h-4" />
-          </Button>
-          <div className="flex gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              asChild
-              title="查看详情"
-              className="transition-colors"
-            >
-              <Link href={`/protected/identities/${identity.id}`}>
-                <ExternalLink className="w-4 h-4" />
-              </Link>
-            </Button>
-            <Button
-              size="icon"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isProcessing}
-              title="删除"
-              className="transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
           </div>
-        </CardFooter>
-      )}
+        )}
+
+        <div className="text-sm flex items-center">
+          <Home className="w-4 h-4 mr-2" />
+          <span className="truncate">{identity.address}</span>
+        </div>
+
+        <div className="text-sm flex items-center">
+          <Phone className="w-4 h-4 mr-2" />
+          <span>{identity.phone}</span>
+        </div>
+
+        <div className="text-sm flex items-center">
+          <Mail className="w-4 h-4 mr-2" />
+          <span className="truncate">{identity.email}</span>
+        </div>
+
+        {identity.occupation && (
+          <div className="text-sm flex items-center">
+            <FileText className="w-4 h-4 mr-2" />
+            <span>{identity.occupation}</span>
+          </div>
+        )}
+
+        {identity.education && (
+          <div className="text-sm flex items-center">
+            <GraduationCap className="w-4 h-4 mr-2" />
+            <span>{identity.education}</span>
+          </div>
+        )}
+
+        {identity.social_media && identity.social_media.length > 0 && (
+          <div className="text-sm mt-2">
+            <div className="flex items-center mb-1">
+              <Globe className="w-4 h-4 mr-2" />
+              <span className="font-medium">社交媒体:</span>
+            </div>
+            <div className="flex flex-wrap gap-1 ml-6">
+              {identity.social_media.map((account, index) => (
+                <Badge key={index} variant="outline" className="flex items-center">
+                  {account.platform}: {account.username}
+                  {account.url && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 ml-1"
+                      onClick={() => {
+                        if (account.url) {
+                          window.open(account.url, '_blank');
+                        }
+                      }}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  )}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+
+      <CardFooter className="flex justify-between border-t p-4">
+        <Link href={`/protected/identities/${identity.id}`} passHref>
+          <Button variant="outline" size="sm">
+            查看详情
+          </Button>
+        </Link>
+
+        {showActions && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "删除中..." : "删除"}
+            <Trash2 className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 } 

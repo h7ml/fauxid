@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { IdentityType, Country } from "@/lib/types";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { COUNTRY_INFO } from "@/lib/country-configs";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 import {
   toggleFavorite,
   deleteIdentity,
@@ -17,6 +18,27 @@ import {
   addTag,
   removeTag
 } from "@/app/actions/identity-actions";
+import Image from "next/image";
+import {
+  Calendar,
+  GraduationCap,
+  Phone,
+  Mail,
+  Home,
+  Tag,
+  FileText,
+  Fingerprint,
+  Trash2,
+  Save,
+  Book,
+  Flag,
+  BookOpen,
+  Car,
+  CreditCard,
+  Globe,
+  Copy
+} from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface IdentityDetailProps {
   identity: IdentityType;
@@ -24,6 +46,7 @@ interface IdentityDetailProps {
 
 export default function IdentityDetail({ identity }: IdentityDetailProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFavorite, setIsFavorite] = useState(identity.favorite || false);
   const [notes, setNotes] = useState(identity.notes || "");
@@ -37,11 +60,15 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
   const currentYear = new Date().getFullYear();
   const age = currentYear - birthYear;
 
-  const formattedBirthDate = new Date(identity.birth_date).toLocaleDateString('zh-CN', {
+  // 根据国家设置不同的日期格式
+  const dateOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  });
+  };
+
+  const dateLocale = identity.country === 'US' ? 'en-US' : 'zh-CN';
+  const formattedBirthDate = new Date(identity.birth_date).toLocaleDateString(dateLocale, dateOptions);
 
   // 当切换为编辑备注模式时，自动聚焦文本框
   useEffect(() => {
@@ -62,9 +89,18 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
 
       if (result.success) {
         setIsFavorite(!isFavorite);
+        toast({
+          title: isFavorite ? "已取消收藏" : "已加入收藏",
+          description: `${identity.name} ${isFavorite ? "已从收藏中移除" : "已添加到收藏"}`,
+        });
       }
     } catch (error) {
       console.error("切换收藏状态失败:", error);
+      toast({
+        title: "操作失败",
+        description: "切换收藏状态时出错",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -84,10 +120,19 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
       const result = await deleteIdentity(formData);
 
       if (result.success) {
+        toast({
+          title: "删除成功",
+          description: `身份 "${identity.name}" 已被删除`,
+        });
         router.push("/protected/identities");
       }
     } catch (error) {
       console.error("删除身份信息失败:", error);
+      toast({
+        title: "删除失败",
+        description: "删除身份信息时出错",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -105,9 +150,18 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
 
       if (result.success) {
         setIsEditingNotes(false);
+        toast({
+          title: "保存成功",
+          description: "备注已更新",
+        });
       }
     } catch (error) {
       console.error("保存备注失败:", error);
+      toast({
+        title: "保存失败",
+        description: "保存备注时出错",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -129,11 +183,20 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
         // 只有当标签不存在时才添加
         if (!tags.includes(newTag.trim())) {
           setTags([...tags, newTag.trim()]);
+          toast({
+            title: "添加成功",
+            description: `标签 "${newTag.trim()}" 已添加`,
+          });
         }
         setNewTag("");
       }
     } catch (error) {
       console.error("添加标签失败:", error);
+      toast({
+        title: "添加失败",
+        description: "添加标签时出错",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -151,219 +214,375 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
 
       if (result.success) {
         setTags(tags.filter(tag => tag !== tagToRemove));
+        toast({
+          title: "删除成功",
+          description: `标签 "${tagToRemove}" 已删除`,
+        });
       }
     } catch (error) {
       console.error("删除标签失败:", error);
+      toast({
+        title: "删除失败",
+        description: "删除标签时出错",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
+  }
+
+  // 复制文本并显示提示
+  function copyToClipboard(text: string, description: string) {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "复制成功",
+      description: description,
+    });
   }
 
   // 获取国家信息
   const countryInfo = COUNTRY_INFO[identity.country as Country] || COUNTRY_INFO.CN;
 
   return (
-    <Card className="overflow-hidden max-w-3xl mx-auto">
-      <CardHeader className="bg-primary/5">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              {identity.name}
-              <Badge variant="outline">{countryInfo.name}</Badge>
-            </CardTitle>
-            <div className="text-muted-foreground mt-1">
-              {age}岁 | {identity.gender} | {identity.occupation || "未知职业"}
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleToggleFavorite}
-            disabled={isProcessing}
-            className="h-8 w-8"
-          >
-            {isFavorite ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-yellow-500">
-                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-              </svg>
-            )}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-4">
-        <div className="grid grid-cols-1 gap-6">
-          {/* 基本信息 */}
-          <div className="grid grid-cols-1 gap-2">
-            <h3 className="text-lg font-medium">基本信息</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="flex">
-                <span className="font-medium w-24">{countryInfo.idNumberName}：</span>
-                <span className="flex-1 break-all">{identity.id_number}</span>
-              </div>
-              <div className="flex">
-                <span className="font-medium w-24">护照号：</span>
-                <span className="flex-1 break-all">{identity.passport_number || "无"}</span>
-              </div>
-              <div className="flex">
-                <span className="font-medium w-24">出生日期：</span>
-                <span>{formattedBirthDate}</span>
-              </div>
-              <div className="flex">
-                <span className="font-medium w-24">国籍：</span>
-                <span>{identity.nationality || countryInfo.name}</span>
-              </div>
-              <div className="flex">
-                <span className="font-medium w-24">教育程度：</span>
-                <span>{identity.education || "未知"}</span>
-              </div>
-              <div className="flex">
-                <span className="font-medium w-24">联系电话：</span>
-                <span>{identity.phone}</span>
-              </div>
-              <div className="flex md:col-span-2">
-                <span className="font-medium w-24">电子邮箱：</span>
-                <span className="break-all">{identity.email}</span>
-              </div>
-              <div className="flex md:col-span-2">
-                <span className="font-medium w-24">家庭住址：</span>
-                <span className="break-all">{identity.address}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 标签 */}
-          <div className="grid grid-cols-1 gap-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">标签</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {tags.length > 0 ? (
-                tags.map(tag => (
-                  <Badge
-                    key={tag}
-                    variant="secondary"
-                    className="px-2 py-1 flex items-center gap-1"
-                  >
-                    {tag}
-                    <button
-                      className="ml-1 hover:text-destructive"
-                      onClick={() => handleRemoveTag(tag)}
-                      disabled={isProcessing}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </Badge>
-                ))
-              ) : (
-                <div className="text-muted-foreground text-sm">暂无标签</div>
-              )}
-            </div>
-            <div className="flex gap-2 mt-1">
-              <Input
-                placeholder="添加新标签..."
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                className="max-w-[200px]"
+    <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="md:col-span-2 overflow-hidden">
+          {/* 显示头像（如果有） */}
+          {identity.avatar_url && (
+            <div className="w-full h-64 bg-muted relative overflow-hidden">
+              <Image
+                src={identity.avatar_url}
+                alt={identity.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
-              <Button size="sm" onClick={handleAddTag} disabled={isProcessing || !newTag.trim()}>
-                添加
-              </Button>
             </div>
-          </div>
+          )}
 
-          {/* 备注 */}
-          <div className="grid grid-cols-1 gap-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">备注</h3>
-              {!isEditingNotes && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditingNotes(true)}
-                >
-                  编辑
-                </Button>
-              )}
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">{identity.name}</CardTitle>
+                <CardDescription className="text-base mt-1">
+                  {age}岁 | {identity.gender} | {identity.occupation || "未知职业"}
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-base">
+                {COUNTRY_INFO[identity.country as Country]?.name || "未知国家"}
+              </Badge>
             </div>
-            {isEditingNotes ? (
-              <div className="space-y-2">
-                <Textarea
-                  ref={notesTextareaRef}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-[120px]"
-                  placeholder="添加备注..."
-                />
-                <div className="flex justify-end gap-2">
+          </CardHeader>
+        </Card>
+
+        <Tabs defaultValue="basic" className="col-span-2">
+          <TabsList className="grid grid-cols-3 md:w-[400px]">
+            <TabsTrigger value="basic">基本信息</TabsTrigger>
+            <TabsTrigger value="contact">联系方式</TabsTrigger>
+            <TabsTrigger value="additional">额外信息</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>基本信息</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">姓名</div>
+                    <div className="font-medium">{identity.name}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">性别</div>
+                    <div className="font-medium">{identity.gender}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">出生日期</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {formattedBirthDate} ({age}岁)
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">职业</div>
+                    <div className="font-medium">{identity.occupation || "未知"}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">教育程度</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      {identity.education || "未知"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">国籍</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Flag className="h-4 w-4" />
+                      {identity.nationality || COUNTRY_INFO[identity.country as Country]?.name || "未知"}
+                    </div>
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <div className="text-sm text-muted-foreground">
+                      {COUNTRY_INFO[identity.country as Country]?.idNumberName || "身份证号"}
+                    </div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Fingerprint className="h-4 w-4" />
+                      {identity.id_number}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-1"
+                        onClick={() => copyToClipboard(identity.id_number, "身份证号已复制到剪贴板")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  {identity.passport_number && (
+                    <div className="space-y-1 col-span-2">
+                      <div className="text-sm text-muted-foreground">护照号码</div>
+                      <div className="font-medium flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        {identity.passport_number}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 ml-1"
+                          onClick={() => copyToClipboard(identity.passport_number || "", "护照号码已复制到剪贴板")}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {identity.drivers_license && (
+                    <div className="space-y-1 col-span-2">
+                      <div className="text-sm text-muted-foreground">驾照号码</div>
+                      <div className="font-medium flex items-center gap-2">
+                        <Car className="h-4 w-4" />
+                        {identity.drivers_license}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 ml-1"
+                          onClick={() => copyToClipboard(identity.drivers_license || "", "驾照号码已复制到剪贴板")}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="contact" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>联系方式</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1 col-span-2">
+                    <div className="text-sm text-muted-foreground">家庭住址</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      {identity.address}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-1"
+                        onClick={() => copyToClipboard(identity.address, "地址已复制到剪贴板")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">电话号码</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      {identity.phone}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-1"
+                        onClick={() => copyToClipboard(identity.phone, "电话号码已复制到剪贴板")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">电子邮箱</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      {identity.email}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-1"
+                        onClick={() => copyToClipboard(identity.email, "邮箱地址已复制到剪贴板")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {identity.social_media && identity.social_media.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      社交媒体账号
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {identity.social_media.map((account, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="text-sm text-muted-foreground">{account.platform}</div>
+                          <div className="font-medium">
+                            {account.username}
+                            {account.url && (
+                              <Button
+                                variant="link"
+                                className="p-0 h-auto ml-2"
+                                onClick={() => {
+                                  if (account.url) {
+                                    window.open(account.url, '_blank');
+                                  }
+                                }}
+                              >
+                                访问
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="additional" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>额外信息</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {identity.credit_card && (
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      信用卡信息
+                    </div>
+                    <div className="bg-muted p-4 rounded-md">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">卡类型</div>
+                          <div className="font-medium">{identity.credit_card.type}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">有效期</div>
+                          <div className="font-medium">{identity.credit_card.expiration}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">卡号</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {identity.credit_card.number}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 ml-1"
+                              onClick={() => copyToClipboard(identity.credit_card?.number || "", "信用卡号已复制到剪贴板")}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">CVV</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {identity.credit_card.cvv}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 ml-1"
+                              onClick={() => copyToClipboard(identity.credit_card?.cvv || "", "CVV码已复制到剪贴板")}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {identity.tags && identity.tags.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      标签
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {identity.tags.map(tag => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    备注
+                  </div>
+                  <Textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    className="min-h-[100px]"
+                    placeholder="添加备注..."
+                  />
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setNotes(identity.notes || "");
-                      setIsEditingNotes(false);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    取消
-                  </Button>
-                  <Button
+                    className="mt-2"
                     size="sm"
                     onClick={handleSaveNotes}
                     disabled={isProcessing}
                   >
-                    保存
+                    <Save className="mr-2 h-4 w-4" />
+                    {isProcessing ? "保存中..." : "保存备注"}
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="p-3 bg-muted/30 rounded-md min-h-[60px]">
-                {notes ? (
-                  <p className="whitespace-pre-wrap">{notes}</p>
-                ) : (
-                  <p className="text-muted-foreground text-sm italic">暂无备注</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between border-t bg-muted/10 py-3">
-        <Button
-          variant="ghost"
-          onClick={() => {
-            const text = `姓名：${identity.name}\n性别：${identity.gender}\n年龄：${age}岁\n${countryInfo.idNumberName}：${identity.id_number}\n出生日期：${formattedBirthDate}\n职业：${identity.occupation || "未知"}\n教育程度：${identity.education || "未知"}\n联系电话：${identity.phone}\n电子邮箱：${identity.email}\n家庭住址：${identity.address}`;
-            navigator.clipboard.writeText(text);
-            alert("身份信息已复制到剪贴板");
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
-          </svg>
-          复制信息
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={isProcessing}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-          </svg>
-          删除身份
-        </Button>
-      </CardFooter>
-    </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>危险操作</CardTitle>
+          <CardDescription>
+            这些操作不可撤销，请谨慎使用。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isProcessing}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {isProcessing ? "删除中..." : "删除此身份"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 } 
