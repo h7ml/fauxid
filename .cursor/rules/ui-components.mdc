@@ -1,0 +1,34 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# UI组件
+
+本项目使用自定义组件和shadcn/ui组件的组合，以实现一致的设计系统。
+
+## 组件结构
+
+- [components/ui](mdc:components/ui) - 核心UI组件（按钮、卡片、对话框等）
+- [components/typography](mdc:components/typography) - 排版组件
+- [components/identity](mdc:components/identity) - 身份特定组件
+- [components/profile](mdc:components/profile) - 用户资料组件
+- [components/tutorial](mdc:components/tutorial) - 教程/引导组件
+
+## 设计系统
+
+设计系统基于：
+- Tailwind CSS进行样式设计
+- shadcn/ui提供组件模式
+- 自定义组件用于应用程序特定UI元素
+
+## 主题配置
+
+- [tailwind.config.ts](mdc:tailwind.config.ts) - Tailwind配置，包括颜色和主题选项
+- [components.json](mdc:components.json) - shadcn/ui组件配置
+
+## 使用模式
+
+- 服务器组件用于静态UI元素和数据获取
+- 客户端组件用于带状态的交互元素
+- 表单组件使用React Hook Form进行验证和提交

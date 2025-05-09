@@ -1,0 +1,26 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 身份验证流程
+
+本项目使用Supabase进行身份验证，并为Next.js实现了自定义集成。
+
+## 身份验证页面
+
+- [app/(auth-pages)/sign-in](mdc:app/(auth-pages)/sign-in) - 用户登录页面
+- [app/(auth-pages)/sign-up](mdc:app/(auth-pages)/sign-up) - 用户注册页面
+- [app/(auth-pages)/forgot-password](mdc:app/(auth-pages)/forgot-password) - 密码找回
+- [app/protected/reset-password](mdc:app/protected/reset-password) - 密码重置页面
+
+## 身份验证逻辑
+
+- 身份验证状态通过Supabase客户端管理
+- [middleware.ts](mdc:middleware.ts)处理路由保护和重定向
+- 通过Supabase OAuth功能支持第三方登录
+- 认证后，用户会被重定向到受保护的路由
+
+## 受保护路由
+
+所有在`app/protected/`下的路由都需要身份验证。middleware会在允许访问这些路由前检查有效会话。

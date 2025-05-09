@@ -1,0 +1,36 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 虚拟身份管理
+
+Fauxid是一个用于创建和管理虚拟身份的应用程序。身份管理功能是应用程序的核心部分。
+
+## 身份结构
+
+一个身份包括：
+- 个人信息（姓名、出生日期等）
+- 身体特征
+- 联系信息
+- 位置数据
+- 社交资料
+
+## 身份相关组件
+
+- [components/identity](mdc:components/identity) - 包含身份管理的UI组件
+- [app/protected/identities](mdc:app/protected/identities) - 身份增删改查操作的路由
+- [app/protected/identities/[id]](mdc:app/protected/identities/[id]) - 单个身份的查看/编辑页面
+
+## 身份操作
+
+应用程序支持以下身份操作：
+- 创建新身份
+- 查看现有身份
+- 更新身份信息
+- 删除身份
+- 共享身份（带权限）
+
+## 数据存储
+
+身份数据存储在Supabase数据库中，并通过Supabase客户端访问。

@@ -1,0 +1,33 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目结构
+
+这是一个使用Supabase进行身份验证和数据存储的Next.js应用程序。
+
+## 主要目录
+
+- `app/` - Next.js应用路由结构，包含页面和路由处理器
+  - `(auth-pages)/` - 身份验证相关页面（登录、注册等）
+  - `protected/` - 需要身份验证的路由
+  - `books/` - 图书功能实现
+  - `notes/` - 笔记功能实现
+  - `actions/` - 用于表单处理的服务器操作
+  - `auth/` - 身份验证回调处理器
+
+- `components/` - 可复用的UI组件
+  - `identity/` - 身份管理组件
+  - `profile/` - 用户资料组件
+  - `ui/` - 通用UI组件（按钮、表单等）
+
+- `lib/` - 应用程序库和工具
+- `supabase/` - Supabase配置和数据库迁移
+- `utils/` - 辅助函数和工具
+
+## 关键文件
+
+- [middleware.ts](mdc:middleware.ts) - 处理身份验证和路由保护
+- [next.config.ts](mdc:next.config.ts) - Next.js配置
+- [tailwind.config.ts](mdc:tailwind.config.ts) - Tailwind CSS配置

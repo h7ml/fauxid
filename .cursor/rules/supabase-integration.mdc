@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Supabase集成
+
+本项目使用Supabase进行身份验证、数据库和存储管理。
+
+## 数据库设置
+
+- 数据库迁移存储在[supabase/migrations](mdc:supabase/migrations)目录
+- 数据库架构包括用户、身份、图书和笔记等表
+
+## Supabase客户端
+
+- Supabase客户端在[utils/supabase](mdc:utils/supabase)目录中初始化
+- 使用两种客户端实例：
+  1. 服务器端客户端（具有管理员权限）
+  2. 客户端浏览器客户端（具有用户权限）
+
+## 数据模型
+
+主要数据模型包括：
+- 用户（由Supabase Auth管理）
+- 身份（用户创建的虚拟身份）
+- 图书
+- 笔记
+
+## 数据库迁移
+
+数据库迁移通过Supabase迁移系统管理。新的迁移应添加到migrations目录并通过Supabase CLI应用。
