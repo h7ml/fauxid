@@ -21,7 +21,7 @@ export default async function AuthButton() {
               variant={"default"}
               className="font-normal pointer-events-none"
             >
-              Please update .env.local file with anon key and url
+              请更新 .env.local 文件，添加 anon key 和 url
             </Badge>
           </div>
           <div className="flex gap-2">
@@ -32,7 +32,7 @@ export default async function AuthButton() {
               disabled
               className="opacity-75 cursor-none pointer-events-none"
             >
-              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-in">登录</Link>
             </Button>
             <Button
               asChild
@@ -41,7 +41,7 @@ export default async function AuthButton() {
               disabled
               className="opacity-75 cursor-none pointer-events-none"
             >
-              <Link href="/sign-up">Sign up</Link>
+              <Link href="/sign-up">注册</Link>
             </Button>
           </div>
         </div>
@@ -50,21 +50,30 @@ export default async function AuthButton() {
   }
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <form action={signOutAction}>
-        <Button type="submit" variant={"outline"}>
-          Sign out
-        </Button>
-      </form>
+      <div className="flex items-center gap-3 mr-2">
+        <Link href="/" className="text-sm font-medium hover:underline">首页</Link>
+        <Link href="/protected/identities" className="text-sm font-medium hover:underline">身份管理</Link>
+      </div>
+      <div className="flex items-center gap-4">
+        您好，{user.email}!
+        <form action={signOutAction}>
+          <Button type="submit" variant={"outline"} size="sm">
+            退出登录
+          </Button>
+        </form>
+      </div>
     </div>
   ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/sign-in">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/sign-up">Sign up</Link>
-      </Button>
+    <div className="flex items-center gap-4">
+      <Link href="/" className="text-sm font-medium hover:underline mr-4">首页</Link>
+      <div className="flex gap-2">
+        <Button asChild size="sm" variant={"outline"}>
+          <Link href="/sign-in">登录</Link>
+        </Button>
+        <Button asChild size="sm" variant={"default"}>
+          <Link href="/sign-up">注册</Link>
+        </Button>
+      </div>
     </div>
   );
 }
