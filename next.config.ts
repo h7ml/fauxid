@@ -19,8 +19,11 @@ const nextConfig: NextConfig = {
     // 仅在Cloudflare环境下禁用图像优化
     ...(isCloudflare ? { unoptimized: true } : {}),
   },
-  // 条件添加Cloudflare Pages兼容配置
-  ...(isCloudflare ? { output: 'standalone' } : {}),
+  // Cloudflare Pages适配
+  ...(isCloudflare ? { 
+    output: 'export', // 适配Cloudflare Pages使用export而非standalone
+    distDir: '.next' // 保持默认输出目录
+  } : {}),
 };
 
 export default nextConfig;

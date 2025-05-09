@@ -1,9 +1,10 @@
 name = "fauxid"
 compatibility_date = "2023-12-01"
 workers_dev = true
+main = "_worker.js"
 
 [build]
-command = "npm run build"
+command = "CLOUDFLARE=true next build"
 cwd = "."
 watch_dir = "app"
 
@@ -12,8 +13,6 @@ route = ""
 zone_id = ""
 
 [site]
-bucket = ".next/standalone"
-entry-point = "_worker.js"
+bucket = ".next/static"
 
-[build.upload]
-format = "service-worker" 
+# 移除了过时的entry-point和build.upload配置 

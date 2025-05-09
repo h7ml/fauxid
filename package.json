@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "deploy:cloudflare": "CLOUDFLARE=true next build && wrangler pages publish .next/standalone --project-name=fauxid",
-    "deploy:cloudflare:prod": "CLOUDFLARE=true next build && wrangler pages publish .next/standalone --project-name=fauxid --branch=main",
+    "deploy:cloudflare": "CLOUDFLARE=true next build && wrangler deploy",
+    "deploy:cloudflare:prod": "CLOUDFLARE=true next build && wrangler deploy --env production",
     "deploy:vercel": "vercel"
   },
   "repository": {
