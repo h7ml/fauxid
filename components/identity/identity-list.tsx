@@ -3,13 +3,19 @@
 import { useState, useEffect } from "react";
 import { IdentityType } from "@/lib/types";
 import IdentityCard from "./identity-card";
+import IdentityTable from "./identity-table";
 
 interface IdentityListProps {
   identities: IdentityType[];
   showActions?: boolean;
+  viewMode?: "grid" | "list" | "table";
 }
 
-export default function IdentityList({ identities, showActions = true }: IdentityListProps) {
+export default function IdentityList({
+  identities,
+  showActions = true,
+  viewMode = "grid"
+}: IdentityListProps) {
   const [localIdentities, setLocalIdentities] = useState(identities);
 
   // 当传入的identities变化时，更新本地状态
@@ -29,14 +35,34 @@ export default function IdentityList({ identities, showActions = true }: Identit
     );
   }
 
+  // 表格视图
+  if (viewMode === "table") {
+    return (
+      <IdentityTable
+        identities={localIdentities}
+        onDelete={handleDeleteIdentity}
+      />
+    );
+  }
+
+  // 卡片或列表视图
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      className={viewMode === "grid"
+        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        : "flex flex-col space-y-4"
+      }
+    >
       {localIdentities.map(identity => (
-        <div key={identity.id} className="h-full">
+        <div
+          key={identity.id}
+          className={viewMode === "grid" ? "h-full" : "w-full"}
+        >
           <IdentityCard
             identity={identity}
             showActions={showActions}
             onDelete={() => handleDeleteIdentity(identity.id)}
+            viewMode={viewMode}
           />
         </div>
       ))}
