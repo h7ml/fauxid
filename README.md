@@ -1,104 +1,154 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
-
 <p align="center">
- The fastest way to build apps with Next.js and Supabase
+  <img src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png" alt="FauxID - 免费虚拟身份生成器" width="500">
+  <h1 align="center">FauxID - 免费虚拟身份生成器</h1>
 </p>
 
 <p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
+  基于 Next.js 和 Supabase 构建的虚拟身份生成与管理平台
 </p>
-<br/>
 
-## Features
+<p align="center">
+  <img src="https://github.com/h7ml/fauxid/actions/workflows/ci.yml/badge.svg" alt="CI Status">
+  <img src="https://github.com/h7ml/fauxid/actions/workflows/cd.yml/badge.svg" alt="CD Status">
+  <img src="https://github.com/h7ml/fauxid/actions/workflows/security.yml/badge.svg" alt="Security Status">
+</p>
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+<p align="center">
+  <a href="#特性">特性</a> ·
+  <a href="#演示">演示</a> ·
+  <a href="#本地开发">本地开发</a> ·
+  <a href="#技术栈">技术栈</a> ·
+  <a href="#部署">部署</a> ·
+  <a href="#项目结构">项目结构</a>
+</p>
 
-## Demo
+## 特性
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+🔐 **虚拟身份生成**
+- 支持生成符合中国身份证规则的身份信息
+- 可自定义性别、年龄范围、地区等参数
+- 支持批量生成和管理多个身份信息
 
-## Deploy to Vercel
+🛡️ **用户认证与管理**
+- 基于 Supabase Auth 的完整用户认证系统
+- 支持邮箱注册、登录、密码重置
+- 用户账户管理与个人资料设置
 
-Vercel deployment will guide you through creating a Supabase account and project.
+🎨 **现代化界面**
+- 使用 Tailwind CSS 和 shadcn/ui 构建的美观界面
+- 响应式设计，适配各种设备尺寸
+- 支持深色/浅色主题切换
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+🔄 **数据持久化**
+- 使用 Supabase 存储生成的身份信息
+- 用户可以保存、编辑和删除自己的虚拟身份
+- 支持设置收藏标记，方便快速访问
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+## 演示
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+访问 [https://fauxid.vercel.app](https://github.com/h7ml/fauxid) 查看在线演示。
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## 本地开发
 
-## Clone and run locally
+1. 克隆仓库
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+```bash
+git clone https://github.com/h7ml/fauxid.git
+cd fauxid
+```
 
-2. Create a Next.js app using the Supabase Starter template npx command
+2. 安装依赖
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+```bash
+# 使用 pnpm
+pnpm install
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+# 或使用 npm
+npm install
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+# 或使用 yarn
+yarn
+```
 
-3. Use `cd` to change into the app's directory
+3. 配置环境变量
 
-   ```bash
-   cd with-supabase-app
-   ```
+复制 `.env.example` 到 `.env.local` 并填写必要的环境变量：
 
-4. Rename `.env.example` to `.env.local` and update the following:
+```
+NEXT_PUBLIC_SUPABASE_URL=你的Supabase项目URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=你的Supabase项目匿名密钥
+```
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+4. 运行开发服务器
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://app.supabase.com/project/_/settings/api)
+```bash
+pnpm dev
+```
 
-5. You can now run the Next.js local development server:
+应用将在 [http://localhost:3000](http://localhost:3000) 运行。
 
-   ```bash
-   npm run dev
-   ```
+## 技术栈
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+- **前端框架**: [Next.js](https://nextjs.org/) - React 框架，支持服务端渲染和静态生成
+- **后端服务**: [Supabase](https://supabase.com/) - 开源的 Firebase 替代品，提供数据库、认证和存储服务
+- **样式解决方案**: [Tailwind CSS](https://tailwindcss.com/) - 实用优先的 CSS 框架
+- **UI 组件**: [shadcn/ui](https://ui.shadcn.com/) - 基于 Radix UI 的可复用组件集合
+- **类型检查**: [TypeScript](https://www.typescriptlang.org/) - JavaScript 的超集，提供静态类型检查
+- **表单处理**: [React Hook Form](https://react-hook-form.com/) - 高性能、灵活且可扩展的表单
+- **验证**: [Zod](https://zod.dev/) - TypeScript 优先的模式验证库
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+## 部署
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+### Vercel 部署
 
-## Feedback and issues
+1. Fork 此仓库到你的 GitHub 账户
+2. 在 Vercel 控制台创建新项目并导入 GitHub 仓库
+3. 配置必要的环境变量
+4. 点击部署
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fh7ml%2Ffauxid&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&project-name=fauxid&repository-name=fauxid)
 
-## More Supabase examples
+### Supabase 配置
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+1. 在 [Supabase](https://supabase.com/) 创建新项目
+2. 启用邮箱认证
+3. 创建必要的数据表和存储桶
+4. 将项目 URL 和匿名密钥添加到环境变量
+
+## 项目结构
+
+```
+fauxid/
+├── app/                     # Next.js App Router 目录
+│   ├── (auth-pages)/        # 认证相关页面（登录、注册等）
+│   ├── actions/             # 服务器端 Actions
+│   ├── protected/           # 需登录访问的页面
+│   └── ...
+├── components/              # 可复用组件
+│   ├── identity/            # 身份相关组件
+│   ├── ui/                  # UI 组件
+│   └── ...
+├── lib/                     # 工具函数和库
+├── supabase/                # Supabase 相关配置
+├── utils/                   # 实用工具
+└── ...
+```
+
+## 贡献指南
+
+1. Fork 仓库
+2. 创建特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交你的更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 开启一个 Pull Request
+
+## 许可证
+
+该项目采用 MIT 许可证 - 详情见 [LICENSE](LICENSE) 文件
+
+## 致谢
+
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [shadcn/ui](https://ui.shadcn.com/)

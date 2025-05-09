@@ -1,0 +1,54 @@
+name: 安全扫描
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # 每周一凌晨2点运行
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  security-scan:
+    name: 依赖安全扫描
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 运行安全审计
+        run: pnpm audit
+
+  codeql-analysis:
+    name: CodeQL 分析
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 初始化 CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          
+      - name: 自动构建
+        uses: github/codeql-action/autobuild@v3
+        
+      - name: 执行 CodeQL 分析
+        uses: github/codeql-action/analyze@v3 
