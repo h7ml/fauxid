@@ -36,11 +36,16 @@ export async function getBook(id: string): Promise<Book | null> {
 
 export async function createBook(book: BookFormData): Promise<Book> {
   const supabase = createClient();
-  const newBook: NewBook = {
-    ...book,
-    published_date: book.published_date || null,
-    page_count: book.page_count || null,
-    rating: book.rating || null,
+  const newBook = {
+    title: book.title,
+    author: book.author,
+    isbn: book.isbn ?? null,
+    description: book.description ?? null,
+    cover_image_url: book.cover_image_url ?? null,
+    published_date: book.published_date ?? null,
+    genre: book.genre ?? null,
+    page_count: book.page_count ?? null,
+    rating: book.rating ?? null,
   };
 
   const { data, error } = await supabase
@@ -59,11 +64,16 @@ export async function createBook(book: BookFormData): Promise<Book> {
 
 export async function updateBook(id: string, book: BookFormData): Promise<Book> {
   const supabase = createClient();
-  const bookUpdate: BookUpdate = {
-    ...book,
-    published_date: book.published_date || null,
-    page_count: book.page_count || null,
-    rating: book.rating || null,
+  const bookUpdate = {
+    title: book.title,
+    author: book.author,
+    isbn: book.isbn ?? null,
+    description: book.description ?? null,
+    cover_image_url: book.cover_image_url ?? null,
+    published_date: book.published_date ?? null,
+    genre: book.genre ?? null,
+    page_count: book.page_count ?? null,
+    rating: book.rating ?? null,
   };
 
   const { data, error } = await supabase

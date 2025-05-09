@@ -4,12 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default async function IdentityPage({
-  params
-}: {
-  params: { id: string }
-}) {
-  const { id } = params;
+export default async function IdentityPage(props: any) {
+  const id = props.params.id;
   const result = await getIdentity(id);
 
   if (!result.success || !result.data) {
