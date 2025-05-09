@@ -1,9 +1,10 @@
-import { signUpAction } from "@/app/actions";
+import { signUpAction, signInWithGithubAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SocialLoginButton } from "@/components/ui/social-login-button";
 import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
 import { AtSign, Lock, UserPlus } from "lucide-react";
@@ -91,6 +92,20 @@ export default async function Signup(props: {
                 注册
               </SubmitButton>
             </div>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-muted"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card px-2 text-muted-foreground">或</span>
+              </div>
+            </div>
+
+            <SocialLoginButton
+              provider="github"
+              formAction={signInWithGithubAction}
+            />
 
             <FormMessage message={searchParams} />
           </form>
