@@ -9,7 +9,6 @@
 
 <p align="center">
   <img src="https://github.com/h7ml/fauxid/actions/workflows/ci.yml/badge.svg" alt="CI Status">
-  <img src="https://github.com/h7ml/fauxid/actions/workflows/cd.yml/badge.svg" alt="CD Status">
   <img src="https://github.com/h7ml/fauxid/actions/workflows/security.yml/badge.svg" alt="Security Status">
 </p>
 
@@ -46,7 +45,7 @@
 
 ## 演示
 
-访问 [https://fauxid.vercel.app](https://github.com/h7ml/fauxid) 查看在线演示。
+访问 [https://fauxid.vercel.app](https://fauxid.vercel.app) 查看在线演示。
 
 ## 本地开发
 
@@ -106,7 +105,7 @@ pnpm dev
 3. 配置必要的环境变量
 4. 点击部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fh7ml%2Ffauxid&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&project-name=fauxid&repository-name=fauxid)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fh7ml%2Ffauxid.git&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&project-name=fauxid&repository-name=fauxid)
 
 ### Supabase 配置
 

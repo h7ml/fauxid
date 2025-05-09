@@ -64,11 +64,11 @@ export default async function AuthButton() {
           <span>首页</span>
         </Link>
         <Link
-          href="/protected/identities"
+          href="/protected"
           className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
         >
-          <Shield className="h-4 w-4" />
-          <span>身份管理</span>
+          <User className="h-4 w-4" />
+          <span>个人中心</span>
         </Link>
       </div>
 
