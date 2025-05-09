@@ -6,6 +6,12 @@ import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Home, User, Shield } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default async function AuthButton() {
   const supabase = await createClient();
@@ -67,16 +73,34 @@ export default async function AuthButton() {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 bg-primary/10">
-            <AvatarFallback className="text-primary">
-              {user.email?.charAt(0).toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium">{user.email}</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-2 cursor-pointer">
+              <Avatar className="h-8 w-8 bg-primary/10">
+                <AvatarFallback className="text-primary">
+                  {user.email?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium">{user.email}</p>
+              </div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="animate-slideUp min-w-48">
+            <DropdownMenuItem asChild>
+              <Link href="/protected/profile" className="flex items-center gap-2 cursor-pointer">
+                <User className="h-4 w-4" />
+                <span>个人资料</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/protected/identities" className="flex items-center gap-2 cursor-pointer">
+                <Shield className="h-4 w-4" />
+                <span>身份管理</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <form action={signOutAction}>
           <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
             <LogOut className="h-4 w-4" />

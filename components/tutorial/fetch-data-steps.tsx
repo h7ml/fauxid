@@ -8,9 +8,9 @@ const create = `create table notes (
 
 insert into notes(title)
 values
-  ('Today I created a Supabase project.'),
-  ('I added some data and queried it from Next.js.'),
-  ('It was awesome!');
+  ('今天我创建了一个Supabase项目。'),
+  ('我添加了一些数据并从Next.js中查询了它。'),
+  ('太棒了！');
 `.trim();
 
 const server = `import { createClient } from '@/utils/supabase/server'
@@ -47,49 +47,46 @@ export default function Page() {
 export default function FetchDataSteps() {
   return (
     <ol className="flex flex-col gap-6">
-      <TutorialStep title="Create some tables and insert some data">
+      <TutorialStep title="创建表格并插入一些数据">
         <p>
-          Head over to the{" "}
+          前往您Supabase项目的{" "}
           <a
             href="https://supabase.com/dashboard/project/_/editor"
             className="font-bold hover:underline text-foreground/80"
             target="_blank"
             rel="noreferrer"
           >
-            Table Editor
+            表格编辑器
           </a>{" "}
-          for your Supabase project to create a table and insert some example
-          data. If you're stuck for creativity, you can copy and paste the
-          following into the{" "}
+          创建一个表并插入一些示例数据。如果您不知道从何处开始，可以复制以下内容到{" "}
           <a
             href="https://supabase.com/dashboard/project/_/sql/new"
             className="font-bold hover:underline text-foreground/80"
             target="_blank"
             rel="noreferrer"
           >
-            SQL Editor
+            SQL编辑器
           </a>{" "}
-          and click RUN!
+          中并点击运行！
         </p>
         <CodeBlock code={create} />
       </TutorialStep>
 
-      <TutorialStep title="Query Supabase data from Next.js">
+      <TutorialStep title="从Next.js查询Supabase数据">
         <p>
-          To create a Supabase client and query data from an Async Server
-          Component, create a new page.tsx file at{" "}
+          要创建Supabase客户端并从异步服务器组件查询数据，请在{" "}
           <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
             /app/notes/page.tsx
           </span>{" "}
-          and add the following.
+          创建一个新的page.tsx文件并添加以下内容。
         </p>
         <CodeBlock code={server} />
-        <p>Alternatively, you can use a Client Component.</p>
+        <p>或者，您也可以使用客户端组件。</p>
         <CodeBlock code={client} />
       </TutorialStep>
 
-      <TutorialStep title="Build in a weekend and scale to millions!">
-        <p>You're ready to launch your product to the world! 🚀</p>
+      <TutorialStep title="周末构建，面向百万用户！">
+        <p>您已准备好向全世界推出您的产品！🚀</p>
       </TutorialStep>
     </ol>
   );
