@@ -3,6 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { CopyField } from './copy-field';
 import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SystemInfo {
   os?: string;
@@ -21,6 +28,7 @@ interface SystemInfoProps {
 
 export function SystemInfo({ className, title = "系统信息" }: SystemInfoProps) {
   const [systemInfo, setSystemInfo] = useState<SystemInfo>({});
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const info: SystemInfo = {
@@ -58,31 +66,76 @@ export function SystemInfo({ className, title = "系统信息" }: SystemInfoProp
   }, []);
 
   return (
-    <div className={cn("space-y-4 rounded-lg border p-4", className)}>
-      <h2 className="text-xl font-semibold">{title}</h2>
-      <div className="grid gap-3">
-        {systemInfo.os && (
-          <CopyField label="操作系统" value={systemInfo.os} />
-        )}
-        {systemInfo.browser && (
-          <CopyField label="浏览器" value={systemInfo.browser} />
-        )}
-        {systemInfo.device && (
-          <CopyField label="设备类型" value={systemInfo.device} />
-        )}
-        {systemInfo.screenSize && (
-          <CopyField label="屏幕分辨率" value={systemInfo.screenSize} />
-        )}
-        {systemInfo.timeZone && (
-          <CopyField label="时区" value={systemInfo.timeZone} />
-        )}
-        {systemInfo.language && (
-          <CopyField label="语言" value={systemInfo.language} />
-        )}
-        {systemInfo.userAgent && (
-          <CopyField label="User Agent" value={systemInfo.userAgent} />
-        )}
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className={cn("rounded-lg border border-border/30", className)}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <h2 className="text-base font-medium">{title}</h2>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+            {isOpen ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+            <span className="sr-only">
+              {isOpen ? "关闭" : "展开"} {title}
+            </span>
+          </Button>
+        </CollapsibleTrigger>
       </div>
-    </div>
+
+      <CollapsibleContent className="px-4 pb-4">
+        <div className="grid gap-3">
+          {systemInfo.os && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">操作系统</span>
+              <span className="text-sm font-medium">{systemInfo.os}</span>
+            </div>
+          )}
+          {systemInfo.browser && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">浏览器</span>
+              <span className="text-sm font-medium">{systemInfo.browser}</span>
+            </div>
+          )}
+          {systemInfo.device && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">设备类型</span>
+              <span className="text-sm font-medium">{systemInfo.device}</span>
+            </div>
+          )}
+          {systemInfo.screenSize && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">屏幕分辨率</span>
+              <span className="text-sm font-medium">{systemInfo.screenSize}</span>
+            </div>
+          )}
+          {systemInfo.timeZone && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">时区</span>
+              <span className="text-sm font-medium">{systemInfo.timeZone}</span>
+            </div>
+          )}
+          {systemInfo.language && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">语言</span>
+              <span className="text-sm font-medium">{systemInfo.language}</span>
+            </div>
+          )}
+        </div>
+
+        {systemInfo.userAgent && (
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <p className="text-xs text-muted-foreground mb-1">User Agent</p>
+            <div className="bg-muted/50 rounded p-2 overflow-auto">
+              <code className="text-xs font-mono break-all">{systemInfo.userAgent}</code>
+            </div>
+          </div>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 } 

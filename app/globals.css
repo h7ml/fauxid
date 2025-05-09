@@ -49,6 +49,62 @@
     --chart-5: 27 87% 67%;
   }
 
+  /* 赛博朋克风格 */
+  .cyberpunk {
+    /* 主色调 - 霓虹蓝 */
+    --primary: 183 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* 暗黑灰背景 */
+    --background: 230 18% 8%;
+    --foreground: 0 0% 96%;
+
+    /* 卡片和弹出窗样式 */
+    --card: 224 20% 6%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 224 20% 6%;
+    --popover-foreground: 0 0% 96%;
+
+    /* 次要颜色 - 偏暗的紫灰 */
+    --secondary: 265 50% 12%;
+    --secondary-foreground: 0 0% 96%;
+
+    /* 静音颜色 */
+    --muted: 230 15% 14%;
+    --muted-foreground: 225 23% 65%;
+
+    /* 强调色 - 霓虹粉 */
+    --accent: 328 100% 60%;
+    --accent-foreground: 0 0% 96%;
+
+    /* 破坏性操作颜色 */
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 96%;
+
+    /* 边框和输入框 */
+    --border: 230 15% 14%;
+    --input: 230 15% 14%;
+    --ring: 183 100% 50%;
+
+    --radius: 0.25rem;
+    /* 低多边形风格通常用更小的圆角 */
+
+    --font-sans: 'Exo 2', system-ui, sans-serif;
+
+    --blur-backdrop: saturate(140%) blur(10px);
+
+    /* 全局动画速度 */
+    --transition-speed: 0.3s;
+
+    /* 图表颜色 */
+    --chart-1: 183 100% 50%;
+    --chart-2: 265 75% 55%;
+    --chart-3: 328 100% 60%;
+    --chart-4: 45 100% 60%;
+    --chart-5: 200 100% 60%;
+  }
+
   .xiaomi {
     /* 小米风格 */
     --background: 0 0% 98%;
@@ -175,6 +231,102 @@
     font-family: var(--font-sans);
   }
 
+  /* 赛博朋克特定样式 */
+  .cyberpunk {
+    @apply bg-cyber-darker text-foreground;
+    background-image: radial-gradient(circle at 50% -20%, theme('colors.cyber.blue/0.15'), transparent 50%),
+      radial-gradient(circle at 90% 80%, theme('colors.cyber.purple/0.1'), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  /* 赛博朋克标题 */
+  .cyberpunk h1,
+  .cyberpunk h2,
+  .cyberpunk h3 {
+    @apply font-exo font-bold text-white;
+    text-shadow: 0 0 5px theme('colors.cyber.blue'),
+      0 0 10px theme('colors.cyber.blue/0.8');
+  }
+
+  /* 赛博朋克文本 */
+  .cyberpunk p,
+  .cyberpunk span {
+    @apply font-poppins;
+  }
+
+  /* 赛博朋克卡片 */
+  .cyberpunk .card {
+    @apply bg-cyber-light/60 backdrop-blur-md border border-cyber-blue/20 rounded-sm shadow-none transition-all duration-300 overflow-hidden;
+    box-shadow: inset 0 0 10px rgba(15, 247, 255, 0.1);
+  }
+
+  .cyberpunk .card:hover {
+    @apply border-cyber-blue/40 shadow-neon;
+  }
+
+  /* 赛博朋克按钮 */
+  .cyberpunk .btn-primary {
+    @apply bg-cyber-dark border border-cyber-blue text-cyber-blue hover:bg-cyber-blue/20 transition-all duration-300 font-exo font-medium tracking-wider uppercase relative overflow-hidden;
+  }
+
+  .cyberpunk .btn-primary::before {
+    content: '';
+    @apply absolute inset-0 bg-cyber-circuit bg-circuit opacity-0 transition-opacity duration-300;
+  }
+
+  .cyberpunk .btn-primary:hover::before {
+    @apply opacity-30 animate-circuit-flow;
+  }
+
+  /* 3D立方体样式 */
+  .cyber-cube {
+    @apply relative w-full aspect-square perspective-[1000px] transform-gpu;
+  }
+
+  .cyber-cube-inner {
+    @apply relative w-full h-full transform-gpu transition-transform duration-1000 transform-style-3d;
+  }
+
+  .cyber-cube-face {
+    @apply absolute inset-0 flex items-center justify-center backface-hidden border border-cyber-blue/30 bg-cyber-light/70 backdrop-blur-md;
+  }
+
+  /* 浮空输入框样式 */
+  .cyber-input-float {
+    @apply relative border-b-2 border-cyber-blue/50 bg-transparent transition-all duration-300;
+  }
+
+  .cyber-input-float input {
+    @apply bg-transparent border-none focus:outline-none text-foreground w-full font-poppins;
+  }
+
+  .cyber-input-float label {
+    @apply absolute left-0 top-0 text-cyber-blue/70 transition-all duration-300 pointer-events-none;
+  }
+
+  .cyber-input-float input:focus+label,
+  .cyber-input-float input:not(:placeholder-shown)+label {
+    @apply -translate-y-5 scale-90 text-cyber-blue;
+  }
+
+  .cyber-input-float::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-cyber-blue transition-all duration-300;
+  }
+
+  .cyber-input-float:focus-within::after {
+    @apply w-full;
+  }
+
+  /* 粒子背景 */
+  .cyber-particles {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+  }
+
+  .cyber-particle {
+    @apply absolute bg-cyber-blue rounded-full opacity-50 animate-float;
+  }
+
   /* Apple风格模糊背景元素 */
   .apple-blur-bg {
     @apply bg-background/80 backdrop-blur-md backdrop-saturate-150 border border-border/40;
@@ -209,6 +361,36 @@
 }
 
 @layer utilities {
+
+  /* 赛博朋克特效 */
+  .text-glow {
+    text-shadow: 0 0 5px theme('colors.cyber.blue'),
+      0 0 10px theme('colors.cyber.blue/0.8');
+  }
+
+  .text-glow-pink {
+    text-shadow: 0 0 5px theme('colors.cyber.pink'),
+      0 0 10px theme('colors.cyber.pink/0.8');
+  }
+
+  .border-glow {
+    @apply border border-cyber-blue shadow-neon;
+  }
+
+  .border-glow-pink {
+    @apply border border-cyber-pink;
+    box-shadow: 0 0 5px theme('colors.cyber.pink'),
+      0 0 20px theme('colors.cyber.pink/0.8');
+  }
+
+  .glass-panel {
+    @apply bg-cyber-dark/30 backdrop-blur-md border border-cyber-blue/20;
+    box-shadow: inset 0 0 20px rgba(15, 247, 255, 0.1);
+  }
+
+  .cyber-grid-bg {
+    @apply bg-cyber-grid bg-[length:20px_20px];
+  }
 
   /* 淡入淡出动画 */
   .animate-fadeIn {
@@ -268,7 +450,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    transform: translateY(30px);
   }
 
   to {
@@ -280,7 +462,7 @@
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-1rem);
+    transform: translateY(-30px);
   }
 
   to {

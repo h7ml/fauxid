@@ -1,0 +1,20 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="circuit" patternUnits="userSpaceOnUse" width="100" height="100" patternTransform="scale(0.5) rotate(0)">
+      <rect width="100%" height="100%" fill="none" />
+      <path d="M10,10 L90,10 M10,30 L30,30 L30,70 M70,30 L90,30 L90,70 M10,50 L30,50 M70,50 L90,50 M10,70 L30,70 M70,70 L90,70 M10,90 L90,90" 
+            stroke="#0ff7ff" stroke-width="1" stroke-opacity="0.3" fill="none" />
+      <circle cx="30" cy="30" r="2" fill="#0ff7ff" fill-opacity="0.4" />
+      <circle cx="70" cy="30" r="2" fill="#0ff7ff" fill-opacity="0.4" />
+      <circle cx="30" cy="70" r="2" fill="#0ff7ff" fill-opacity="0.4" />
+      <circle cx="70" cy="70" r="2" fill="#0ff7ff" fill-opacity="0.4" />
+      <path d="M30,30 L50,10 M70,30 L50,10 M30,70 L50,90 M70,70 L50,90" 
+            stroke="#0ff7ff" stroke-width="1" stroke-opacity="0.2" fill="none" />
+      <circle cx="50" cy="10" r="3" fill="#0ff7ff" fill-opacity="0.5" />
+      <circle cx="50" cy="90" r="3" fill="#0ff7ff" fill-opacity="0.5" />
+      <path d="M30,50 L70,50" stroke="#0ff7ff" stroke-width="1" stroke-opacity="0.3" fill="none" />
+      <circle cx="50" cy="50" r="4" fill="#0ff7ff" fill-opacity="0.6" />
+    </pattern>
+  </defs>
+  <rect width="300" height="300" fill="url(#circuit)" />
+</svg> 

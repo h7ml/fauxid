@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { IdentityType, Country } from "@/lib/types";
+import { IdentityType, Country, Gender } from "@/lib/types";
 import IdentityList from "./identity-list";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,17 @@ import {
   List as ListIcon,
   Star,
   Calendar,
-  Table as TableIcon
+  Table as TableIcon,
+  Filter,
+  ChevronDown,
+  Users,
+  Clock,
+  SortAsc,
+  SortDesc,
+  AlignJustify,
+  User,
+  UserCircle2,
+  Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +43,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 interface FilterableIdentityListProps {
   identities: IdentityType[];
@@ -47,6 +74,8 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name">("newest");
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedGender, setSelectedGender] = useState<Gender | "all">("all");
+  const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
 
   // 当身份列表变化时更新过滤后的身份列表
   useEffect(() => {
@@ -54,20 +83,38 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
   }, [identities]);
 
   // 提取所有标签
-  const allTags = new Set<string>();
-  identities.forEach(identity => {
-    if (identity.tags && identity.tags.length > 0) {
-      identity.tags.forEach(tag => allTags.add(tag));
-    }
-  });
+  const allTags = Array.from(new Set<string>(
+    identities.flatMap(identity => identity.tags || [])
+  )).sort();
 
   // 提取所有国家
-  const countriesInUse = new Set<Country>();
-  identities.forEach(identity => {
-    if (identity.country) {
-      countriesInUse.add(identity.country);
-    }
-  });
+  const countriesInUse = Array.from(new Set<Country>(
+    identities.map(identity => identity.country)
+  )).sort();
+
+  // 计算标签数量
+  const getTagCount = (tag: string) => {
+    return identities.filter(identity =>
+      identity.tags && identity.tags.includes(tag)
+    ).length;
+  };
+
+  // 计算国家数量
+  const getCountryCount = (country: Country) => {
+    return identities.filter(identity => identity.country === country).length;
+  };
+
+  // 计算性别数量
+  const getGenderCount = (gender: Gender) => {
+    return identities.filter(identity => identity.gender === gender).length;
+  };
+
+  // 计算年龄
+  const calculateAge = (birthDate: string) => {
+    const birthYear = new Date(birthDate).getFullYear();
+    const currentYear = new Date().getFullYear();
+    return currentYear - birthYear;
+  };
 
   // 应用所有筛选条件
   const applyFilters = () => {
@@ -81,6 +128,7 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
         identity.id_number.toLowerCase().includes(term) ||
         (identity.email && identity.email.toLowerCase().includes(term)) ||
         (identity.address && identity.address.toLowerCase().includes(term)) ||
+        (identity.occupation && identity.occupation.toLowerCase().includes(term)) ||
         (identity.notes && identity.notes.toLowerCase().includes(term))
       );
     }
@@ -98,6 +146,19 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
         identity.country === selectedCountry
       );
     }
+
+    // 按性别筛选
+    if (selectedGender && selectedGender !== "all") {
+      result = result.filter(identity =>
+        identity.gender === selectedGender
+      );
+    }
+
+    // 按年龄范围筛选
+    result = result.filter(identity => {
+      const age = calculateAge(identity.birth_date);
+      return age >= ageRange[0] && age <= ageRange[1];
+    });
 
     // 只显示收藏
     if (showFavoritesOnly) {
@@ -123,7 +184,12 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
   // 当筛选条件变化时更新结果
   useEffect(() => {
     applyFilters();
-  }, [identities, searchTerm, selectedTag, selectedCountry, showFavoritesOnly, sortBy]);
+  }, [identities, searchTerm, selectedTag, selectedCountry, showFavoritesOnly, sortBy, selectedGender, ageRange]);
+
+  // 重置年龄范围
+  const resetAgeRange = () => {
+    setAgeRange([0, 100]);
+  };
 
   // 清除所有筛选条件
   const clearAllFilters = () => {
@@ -132,291 +198,437 @@ export default function FilterableIdentityList({ identities }: FilterableIdentit
     setSelectedCountry("all");
     setShowFavoritesOnly(false);
     setSortBy("newest");
+    setSelectedGender("all");
+    resetAgeRange();
+  };
+
+  // 是否有任何筛选条件
+  const hasFilters = () => {
+    return searchTerm !== "" ||
+      selectedTag !== null ||
+      selectedCountry !== "all" ||
+      showFavoritesOnly ||
+      selectedGender !== "all" ||
+      ageRange[0] !== 0 ||
+      ageRange[1] !== 100;
   };
 
   return (
     <div className="space-y-6">
       {/* 搜索和视图控制 */}
-      <div className="flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative w-full md:w-1/2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索名称、身份证号、邮箱或地址..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10 w-full"
-          />
-          {searchTerm && (
-            <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchTerm("")}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative w-full md:w-3/5">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="搜索名称、身份证号、邮箱、地址或职业..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-10 w-full border-dashed focus:border-solid"
+            />
+            {searchTerm && (
+              <button
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                onClick={() => setSearchTerm("")}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={showFavoritesOnly ? "default" : "outline"}
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                >
-                  <Star className={`h-4 w-4 ${showFavoritesOnly ? "fill-white" : ""}`} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{showFavoritesOnly ? "显示全部" : "只显示收藏"}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 ml-auto">
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setShowFilters(!showFilters)}
+                  size="sm"
+                  className={cn(
+                    "text-xs border-dashed",
+                    hasFilters() ? "border-primary text-primary" : ""
+                  )}
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <Filter className="h-3.5 w-3.5 mr-1" />
+                  筛选
+                  {hasFilters() && <Badge className="ml-1 h-5 bg-primary text-xs">已启用</Badge>}
+                  <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-50" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>高级筛选</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm flex items-center">
+                    <Filter className="h-4 w-4 mr-1" />
+                    高级筛选
+                  </h4>
 
-          <div className="flex border rounded-md overflow-hidden">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="icon"
-                    className="h-9 w-9 rounded-none"
-                    onClick={() => setViewMode("grid")}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>网格视图</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <div className="space-y-2">
+                    <Label className="text-xs">国家</Label>
+                    <Select
+                      value={selectedCountry}
+                      onValueChange={(value) => setSelectedCountry(value as Country | "all")}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择国家" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          <div className="flex items-center justify-between w-full">
+                            <span>所有国家</span>
+                            <Badge variant="outline" className="ml-2">
+                              {identities.length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        {countriesInUse.map((country) => (
+                          <SelectItem key={country} value={country}>
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center">
+                                <span className="mr-1">{
+                                  country === "CN" ? "🇨🇳" :
+                                    country === "US" ? "🇺🇸" :
+                                      country === "UK" ? "🇬🇧" :
+                                        country === "JP" ? "🇯🇵" :
+                                          country === "CA" ? "🇨🇦" :
+                                            country === "AU" ? "🇦🇺" : "🏳️"
+                                }</span>
+                                <span>{COUNTRY_INFO[country]?.name}</span>
+                              </div>
+                              <Badge variant="outline" className="ml-2">
+                                {getCountryCount(country)}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="icon"
-                    className="h-9 w-9 rounded-none"
-                    onClick={() => setViewMode("list")}
-                  >
-                    <ListIcon className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>列表视图</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <div className="space-y-2">
+                    <Label className="text-xs">性别</Label>
+                    <Select
+                      value={selectedGender}
+                      onValueChange={(value) => setSelectedGender(value as Gender | "all")}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择性别" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">
+                          <div className="flex items-center justify-between w-full">
+                            <span>所有性别</span>
+                            <Badge variant="outline" className="ml-2">
+                              {identities.length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="男">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center">
+                              <User className="w-3.5 h-3.5 mr-1.5 text-blue-500" />
+                              <span>男</span>
+                            </div>
+                            <Badge variant="outline" className="ml-2">
+                              {getGenderCount("男")}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="女">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center">
+                              <UserCircle2 className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
+                              <span>女</span>
+                            </div>
+                            <Badge variant="outline" className="ml-2">
+                              {getGenderCount("女")}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={viewMode === "table" ? "default" : "ghost"}
-                    size="icon"
-                    className="h-9 w-9 rounded-none"
-                    onClick={() => setViewMode("table")}
-                  >
-                    <TableIcon className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>表格视图</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">年龄范围</Label>
+                      <button
+                        className="text-xs text-primary"
+                        onClick={resetAgeRange}
+                      >
+                        重置
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={ageRange[0]}
+                        onChange={(e) => setAgeRange([parseInt(e.target.value) || 0, ageRange[1]])}
+                        className="w-20 text-center"
+                      />
+                      <div className="flex-grow border-t border-border"></div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={ageRange[1]}
+                        onChange={(e) => setAgeRange([ageRange[0], parseInt(e.target.value) || 100])}
+                        className="w-20 text-center"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs">标签</Label>
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1">
+                      {allTags.length > 0 ? (
+                        allTags.map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant={selectedTag === tag ? "default" : "outline"}
+                            className="cursor-pointer transition-colors"
+                            onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                          >
+                            <Tag className="h-3 w-3 mr-1" />
+                            {tag}
+                            <span className="ml-1 text-xs opacity-70">
+                              {getTagCount(tag)}
+                            </span>
+                          </Badge>
+                        ))
+                      ) : (
+                        <div className="text-xs text-muted-foreground py-1">暂无标签</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between border-t">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="text-xs h-8"
+                      disabled={!hasFilters()}
+                    >
+                      <X className="h-3.5 w-3.5 mr-1" />
+                      清除全部
+                    </Button>
+
+                    <div className="flex items-center">
+                      <Button
+                        variant={showFavoritesOnly ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                        className="text-xs h-8"
+                      >
+                        <Heart className={cn(
+                          "h-3.5 w-3.5 mr-1",
+                          showFavoritesOnly ? "fill-white" : ""
+                        )} />
+                        {showFavoritesOnly ? "仅收藏" : "全部"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-dashed"
+                >
+                  <Clock className="h-3.5 w-3.5 mr-1" />
+                  排序
+                  <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm flex items-center">
+                    <AlignJustify className="h-4 w-4 mr-1" />
+                    排序方式
+                  </h4>
+
+                  <div className="space-y-1">
+                    <Button
+                      variant={sortBy === "newest" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setSortBy("newest")}
+                      className="w-full justify-start text-xs h-8"
+                    >
+                      <SortDesc className="h-3.5 w-3.5 mr-1.5" />
+                      最新创建
+                    </Button>
+                    <Button
+                      variant={sortBy === "oldest" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setSortBy("oldest")}
+                      className="w-full justify-start text-xs h-8"
+                    >
+                      <SortAsc className="h-3.5 w-3.5 mr-1.5" />
+                      最早创建
+                    </Button>
+                    <Button
+                      variant={sortBy === "name" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setSortBy("name")}
+                      className="w-full justify-start text-xs h-8"
+                    >
+                      <Users className="h-3.5 w-3.5 mr-1.5" />
+                      姓名字母
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <div className="bg-muted/30 rounded-md border flex overflow-hidden">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-9 w-9 rounded-none border-0"
+                      onClick={() => setViewMode("grid")}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>网格视图</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-9 w-9 rounded-none border-0"
+                      onClick={() => setViewMode("list")}
+                    >
+                      <ListIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>列表视图</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={viewMode === "table" ? "default" : "ghost"}
+                      size="icon"
+                      className="h-9 w-9 rounded-none border-0"
+                      onClick={() => setViewMode("table")}
+                    >
+                      <TableIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>表格视图</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 高级筛选器 */}
-      {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-muted/10 p-4 rounded-lg border animate-in slide-in-from-top-4 duration-300">
-          {/* 标签筛选 */}
-          <div>
-            <Label htmlFor="tag-filter" className="mb-2 block text-sm font-medium flex items-center">
-              <Tag className="w-3.5 h-3.5 mr-1.5" />
-              按标签筛选
-            </Label>
-            <Select
-              value={selectedTag || "all"}
-              onValueChange={(value) => {
-                setSelectedTag(value === "all" ? null : value);
-              }}
-            >
-              <SelectTrigger id="tag-filter" className="w-full">
-                <SelectValue placeholder="选择标签" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部标签</SelectItem>
-                {Array.from(allTags).map(tag => (
-                  <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* 筛选标签展示 */}
+        {hasFilters() && (
+          <div className="flex flex-wrap gap-2 items-center mt-1">
+            {selectedCountry !== "all" && (
+              <Badge variant="secondary" className="text-xs px-2 py-1 gap-1">
+                <Globe className="h-3 w-3" />
+                {COUNTRY_INFO[selectedCountry]?.name || selectedCountry}
+                <button
+                  className="ml-1 hover:text-foreground"
+                  onClick={() => setSelectedCountry("all")}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
 
-          {/* 国家筛选 */}
-          <div>
-            <Label htmlFor="country-filter" className="mb-2 block text-sm font-medium flex items-center">
-              <Globe className="w-3.5 h-3.5 mr-1.5" />
-              按国家筛选
-            </Label>
-            <Select
-              value={selectedCountry}
-              onValueChange={(value) => {
-                setSelectedCountry(value as Country | "all");
-              }}
-            >
-              <SelectTrigger id="country-filter" className="w-full">
-                <SelectValue placeholder="选择国家" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部国家</SelectItem>
-                {Array.from(countriesInUse).map(countryCode => (
-                  <SelectItem key={countryCode} value={countryCode}>
-                    {COUNTRY_INFO[countryCode]?.name || countryCode}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            {selectedGender !== "all" && (
+              <Badge variant="secondary" className="text-xs px-2 py-1 gap-1">
+                {selectedGender === "男" ? (
+                  <User className="h-3 w-3" />
+                ) : (
+                  <UserCircle2 className="h-3 w-3" />
+                )}
+                {selectedGender}
+                <button
+                  className="ml-1 hover:text-foreground"
+                  onClick={() => setSelectedGender("all")}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
 
-          {/* 排序方式 */}
-          <div>
-            <Label htmlFor="sort-filter" className="mb-2 block text-sm font-medium flex items-center">
-              <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              排序方式
-            </Label>
-            <Select
-              value={sortBy}
-              onValueChange={(value) => {
-                setSortBy(value as "newest" | "oldest" | "name");
-              }}
-            >
-              <SelectTrigger id="sort-filter" className="w-full">
-                <SelectValue placeholder="排序方式" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">最新创建</SelectItem>
-                <SelectItem value="oldest">最早创建</SelectItem>
-                <SelectItem value="name">按名称</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {(ageRange[0] !== 0 || ageRange[1] !== 100) && (
+              <Badge variant="secondary" className="text-xs px-2 py-1 gap-1">
+                <Calendar className="h-3 w-3" />
+                {ageRange[0]}-{ageRange[1]}岁
+                <button
+                  className="ml-1 hover:text-foreground"
+                  onClick={resetAgeRange}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
 
-          {/* 重置按钮 */}
-          <div className="flex items-end">
+            {selectedTag && (
+              <Badge variant="secondary" className="text-xs px-2 py-1 gap-1">
+                <Tag className="h-3 w-3" />
+                {selectedTag}
+                <button
+                  className="ml-1 hover:text-foreground"
+                  onClick={() => setSelectedTag(null)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+
+            {showFavoritesOnly && (
+              <Badge variant="secondary" className="text-xs px-2 py-1 gap-1">
+                <Star className="h-3 w-3 fill-current" />
+                收藏
+                <button
+                  className="ml-1 hover:text-foreground"
+                  onClick={() => setShowFavoritesOnly(false)}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            )}
+
             <Button
               variant="ghost"
-              className="w-full"
+              size="sm"
               onClick={clearAllFilters}
+              className="h-7 text-xs ml-2"
             >
-              重置所有筛选
+              <X className="h-3 w-3 mr-1" />
+              清除全部
             </Button>
           </div>
-        </div>
-      )}
-
-      {/* 筛选结果摘要 */}
-      <div className="flex flex-wrap items-center justify-between py-2 mb-4 border-b">
-        <div className="flex flex-wrap items-center gap-2 mb-2 md:mb-0">
-          {selectedTag && (
-            <Badge
-              variant="secondary"
-              className="flex items-center px-3 py-1 gap-1"
-            >
-              <Tag className="w-3 h-3" />
-              {selectedTag}
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => setSelectedTag(null)}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          )}
-          {selectedCountry && selectedCountry !== "all" && (
-            <Badge
-              variant="secondary"
-              className="flex items-center px-3 py-1 gap-1"
-            >
-              <Globe className="w-3 h-3" />
-              {COUNTRY_INFO[selectedCountry as Country]?.name || selectedCountry}
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => setSelectedCountry("all")}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          )}
-          {showFavoritesOnly && (
-            <Badge
-              variant="secondary"
-              className="flex items-center px-3 py-1 gap-1"
-            >
-              <Star className="w-3 h-3" />
-              仅显示收藏
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => setShowFavoritesOnly(false)}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          )}
-          {sortBy !== "newest" && (
-            <Badge
-              variant="secondary"
-              className="flex items-center px-3 py-1 gap-1"
-            >
-              <Calendar className="w-3 h-3" />
-              {sortBy === "oldest" ? "最早创建" : "按名称"}
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => setSortBy("newest")}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          )}
-          {(selectedTag || (selectedCountry && selectedCountry !== "all") || showFavoritesOnly || sortBy !== "newest" || searchTerm) && (
-            <button
-              className="text-xs text-muted-foreground hover:text-destructive underline"
-              onClick={clearAllFilters}
-            >
-              清除所有筛选
-            </button>
-          )}
-        </div>
-        <div className="text-sm font-medium">
-          共 {filteredIdentities.length} 条结果
-        </div>
+        )}
       </div>
 
+      {/* 结果计数 */}
+      <div className="text-xs text-muted-foreground">
+        共 {filteredIdentities.length} 个身份 {identities.length !== filteredIdentities.length && `(已筛选自 ${identities.length} 个)`}
+      </div>
+
+      {/* 身份列表 */}
       <IdentityList
         identities={filteredIdentities}
         viewMode={viewMode}
