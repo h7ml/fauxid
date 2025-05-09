@@ -1,0 +1,22 @@
+{
+  "build": {
+    "command": "npm run build",
+    "environment": {
+      "NODE_VERSION": "18"
+    }
+  },
+  "routes": [
+    {
+      "pattern": "/_next/static/*",
+      "service": "static"
+    },
+    {
+      "pattern": "/static/*",
+      "service": "static"
+    },
+    {
+      "pattern": "/*",
+      "service": "ssr"
+    }
+  ]
+}

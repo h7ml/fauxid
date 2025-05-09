@@ -1,0 +1,19 @@
+name = "fauxid"
+compatibility_date = "2023-12-01"
+workers_dev = true
+
+[build]
+command = "npm run build"
+cwd = "."
+watch_dir = "app"
+
+[env.production]
+route = ""
+zone_id = ""
+
+[site]
+bucket = ".next/standalone"
+entry-point = "_worker.js"
+
+[build.upload]
+format = "service-worker" 

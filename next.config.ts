@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isCloudflare = process.env.CLOUDFLARE === 'true';
+
 const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
@@ -14,7 +16,11 @@ const nextConfig: NextConfig = {
       'robohash.org',
       'xsgames.co'
     ],
+    // 仅在Cloudflare环境下禁用图像优化
+    ...(isCloudflare ? { unoptimized: true } : {}),
   },
+  // 条件添加Cloudflare Pages兼容配置
+  ...(isCloudflare ? { output: 'standalone' } : {}),
 };
 
 export default nextConfig;
