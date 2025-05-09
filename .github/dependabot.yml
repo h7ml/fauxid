@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # 启用npm依赖检查
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    # 设置PR审阅者
+    reviewers:
+      - "h7ml"
+    # 分组所有更新到一个PR中
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
+    # 指定依赖版本更新策略  
+    versioning-strategy: auto
+    
+  # 启用GitHub Actions依赖检查
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    reviewers:
+      - "h7ml" 
