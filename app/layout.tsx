@@ -31,9 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh" className={geistSans.className} suppressHydrationWarning>
-      <body className="bg-background text-foreground relative" suppressHydrationWarning>
+      <body className="bg-background text-foreground relative theme-transition" suppressHydrationWarning>
         {/* 背景装饰元素 */}
-        <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none"></div>
+        <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none opacity-60"></div>
         <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-secondary/10 via-background to-background opacity-70 pointer-events-none"></div>
 
         <ThemeProvider
@@ -45,7 +45,7 @@ export default function RootLayout({
           <main className="min-h-screen flex flex-col items-center">
             <div className="flex-1 w-full flex flex-col gap-16 items-center">
               {/* 现代化的导航栏 */}
-              <nav className="w-full sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-b-foreground/10 py-3">
+              <nav className="w-full sticky top-0 z-50 apple-blur-bg py-3">
                 <div className="w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8">
                   <div className="flex gap-5 items-center">
                     <Link href={"/"} className="text-lg font-bold text-primary hover:text-primary/80 transition-colors">

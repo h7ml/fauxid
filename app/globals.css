@@ -4,26 +4,44 @@
 
 @layer base {
   :root {
+    /* 默认主题 - Apple风格 */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+
+    --primary: 205 100% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 205 100% 50%;
+
+    --radius: 0.75rem;
+
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+    --blur-backdrop: saturate(180%) blur(20px);
+
+    /* 全局动画速度 */
+    --transition-speed: 0.2s;
+
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -31,31 +49,118 @@
     --chart-5: 27 87% 67%;
   }
 
-  .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+  .xiaomi {
+    /* 小米风格 */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 24 100% 98%;
+    --accent-foreground: 24 100% 40%;
+
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 24 100% 50%;
+
+    --radius: 0.5rem;
+
+    --font-sans: 'MiSans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    --blur-backdrop: blur(10px);
+
+    /* 全局动画速度 */
+    --transition-speed: 0.15s;
+
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+  }
+
+  .dark {
+    /* Apple深色模式 */
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 205 100% 50%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 205 100% 60%;
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+
+  .xiaomi.dark {
+    /* 小米深色模式 */
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 24 60% 13%;
+    --accent-foreground: 24 90% 70%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 24 90% 60%;
   }
 }
 
@@ -65,7 +170,41 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans);
+  }
+
+  /* Apple风格模糊背景元素 */
+  .apple-blur-bg {
+    @apply bg-background/80 backdrop-blur-md backdrop-saturate-150 border border-border/40;
+    -webkit-backdrop-filter: var(--blur-backdrop);
+    backdrop-filter: var(--blur-backdrop);
+  }
+
+  /* 小米风格卡片 */
+  .xiaomi .card {
+    @apply rounded-md border-border/40 shadow-sm transition-all duration-200;
+  }
+
+  /* Apple风格卡片 */
+  .card {
+    @apply rounded-xl border-border/20 shadow-sm transition-all duration-200;
+  }
+
+  /* 主题切换动画 */
+  .theme-transition {
+    @apply transition-all duration-300;
+  }
+
+  /* 针对按钮的主题特定样式 */
+  .xiaomi .btn-primary {
+    @apply font-medium shadow-sm;
+  }
+
+  /* Apple风格按钮 */
+  .btn-primary {
+    @apply font-medium shadow;
   }
 }
 
@@ -93,6 +232,26 @@
 
   .hover-card-effect:hover {
     @apply shadow-lg -translate-y-1;
+  }
+
+  /* 小米风格悬停效果 */
+  .xiaomi .hover-card-effect:hover {
+    @apply shadow-md -translate-y-0.5;
+  }
+
+  /* Apple风格模糊背景 */
+  .apple-glass {
+    @apply bg-background/80 backdrop-blur-md border border-white/20 dark:border-white/10;
+  }
+
+  /* 小米风格圆角 */
+  .xiaomi-radius {
+    @apply rounded-md;
+  }
+
+  /* Apple风格圆角 */
+  .apple-radius {
+    @apply rounded-xl;
   }
 }
 

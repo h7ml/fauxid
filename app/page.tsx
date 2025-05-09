@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import IdentityGeneratorForm from "@/components/identity/identity-generator-form";
 import { generateRandomIdentity } from "@/lib/identity-generator";
 import IdentityCard from "@/components/identity/identity-card";
+import { ArrowRight, CheckCircle, ScanFace, Sparkles, User, Users } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "FauxID - 免费虚拟身份生成器",
@@ -17,76 +18,81 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-primary/5">
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-primary/5 border-b border-primary/10 theme-transition">
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-            <div className="space-y-4">
-              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                虚拟身份生成器
+          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
+            <div className="space-y-6 theme-transition">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary-foreground mb-2">
+                <Sparkles className="h-3.5 w-3.5 mr-2" />
+                <span>全新界面体验</span>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+                虚拟身份<span className="text-primary">生成器</span>
               </h1>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl">
+              <p className="max-w-[600px] text-muted-foreground md:text-xl leading-relaxed">
                 快速生成逼真的虚拟身份数据，用于开发、测试或其他合法用途。不收集任何个人信息。
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 <Link href="/protected/identities">
-                  <Button size="lg">
+                  <Button size="lg" className="font-medium theme-transition btn-primary">
                     开始使用
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="ml-2 h-4 w-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                      />
-                    </svg>
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline" size="lg" className="font-medium theme-transition">
                     注册账号
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="mx-auto lg:mx-0">
-              <IdentityCard identity={sampleIdentity} showActions={false} />
+            <div className="flex justify-center lg:justify-end">
+              <div className="relative max-w-sm">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-xl blur opacity-30"></div>
+                <div className="relative">
+                  <IdentityCard identity={sampleIdentity} showActions={false} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
+      <section className="w-full py-12 md:py-24 lg:py-32 theme-transition">
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">主要特点</h2>
-              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+            <div className="space-y-2 max-w-[800px]">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">主要特点</h2>
+              <p className="text-muted-foreground md:text-xl/relaxed">
                 我们的虚拟身份生成器提供多种功能，满足您的各种需求
               </p>
             </div>
           </div>
-          <div className="mx-auto grid max-w-5xl items-center gap-6 py-12 lg:grid-cols-3 lg:gap-12">
-            <div className="grid gap-1">
-              <h3 className="text-xl font-bold">真实可信的数据</h3>
+          <div className="grid max-w-5xl mx-auto gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="bg-background p-6 rounded-xl border border-border/40 shadow-sm hover-card-effect">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <ScanFace className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">真实可信的数据</h3>
               <p className="text-muted-foreground">
                 生成符合中国身份证规则的身份信息，包括姓名、性别、出生日期等
               </p>
             </div>
-            <div className="grid gap-1">
-              <h3 className="text-xl font-bold">可自定义参数</h3>
+            <div className="bg-background p-6 rounded-xl border border-border/40 shadow-sm hover-card-effect">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <User className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">可自定义参数</h3>
               <p className="text-muted-foreground">
                 可以指定性别、年龄范围、地区等参数，生成符合特定条件的身份
               </p>
             </div>
-            <div className="grid gap-1">
-              <h3 className="text-xl font-bold">批量生成</h3>
+            <div className="bg-background p-6 rounded-xl border border-border/40 shadow-sm hover-card-effect">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">批量生成</h3>
               <p className="text-muted-foreground">
                 支持一次性生成多个身份信息，提高工作效率
               </p>
@@ -96,17 +102,19 @@ export default function Home() {
       </section>
 
       {/* Try It Now */}
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-primary/5">
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-primary/5 border-y border-primary/10 theme-transition">
         <div className="container px-4 md:px-6 mx-auto">
-          <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">立即尝试</h2>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+          <div className="flex flex-col items-center space-y-8 text-center">
+            <div className="space-y-2 max-w-[800px]">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl lg:text-5xl">立即尝试</h2>
+              <p className="text-muted-foreground md:text-xl/relaxed">
                 注册账号后可以保存生成的身份信息，方便后续使用
               </p>
             </div>
-            <div className="w-full max-w-md mx-auto">
-              <IdentityGeneratorForm />
+            <div className="w-full max-w-lg mx-auto">
+              <div className="bg-background rounded-xl border border-border/40 shadow-sm p-6 apple-blur-bg mt-8">
+                <IdentityGeneratorForm />
+              </div>
             </div>
           </div>
         </div>
