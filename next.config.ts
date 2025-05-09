@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
     output: 'export', // 适配Cloudflare Pages使用export而非standalone
     distDir: '.next' // 保持默认输出目录
   } : {}),
+  // 确保环境变量在客户端和服务器端都可用
+  env: {
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || '',
+  },
 };
 
 export default nextConfig;
