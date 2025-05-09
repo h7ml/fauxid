@@ -6,7 +6,7 @@ export function EnvVarWarning() {
   return (
     <div className="flex gap-4 items-center">
       <Badge variant={"outline"} className="font-normal">
-        Supabase environment variables required
+        需要设置 Supabase 环境变量
       </Badge>
       <div className="flex gap-2">
         <Button
@@ -16,7 +16,7 @@ export function EnvVarWarning() {
           disabled
           className="opacity-75 cursor-none pointer-events-none"
         >
-          <Link href="/sign-in">Sign in</Link>
+          <Link href="/sign-in">登录</Link>
         </Button>
         <Button
           asChild
@@ -25,7 +25,7 @@ export function EnvVarWarning() {
           disabled
           className="opacity-75 cursor-none pointer-events-none"
         >
-          <Link href="/sign-up">Sign up</Link>
+          <Link href="/sign-up">注册</Link>
         </Button>
       </div>
     </div>
