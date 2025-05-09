@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Globe, Key, Mail, Shield, User, UserCheck } from "lucide-react";
 import AvatarUpload from "@/components/profile/avatar-upload";
+import { ClientProfileSection } from "@/components/profile/client-profile-section";
+import { CopyButton } from "@/components/ui/copy-button";
 
 export const metadata: Metadata = {
   title: "个人资料 | FauxID",
@@ -86,6 +88,13 @@ export default async function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-muted-foreground" />
                   <span className="text-sm">用户ID: {user.id.substring(0, 8)}...</span>
+                  <CopyButton
+                    value={user.id}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 ml-1"
+                    tooltipMessage="复制用户ID"
+                  />
                 </div>
               </div>
 
@@ -119,11 +128,29 @@ export default async function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <p className="text-xs text-muted-foreground">邮箱地址</p>
-                        <p className="font-medium">{user.email}</p>
+                        <div className="flex items-center">
+                          <p className="font-medium">{user.email}</p>
+                          <CopyButton
+                            value={user.email || ''}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 ml-1"
+                            tooltipMessage="复制邮箱地址"
+                          />
+                        </div>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">用户ID</p>
-                        <p className="font-medium font-mono text-sm">{user.id}</p>
+                        <div className="flex items-center">
+                          <p className="font-medium font-mono text-sm">{user.id}</p>
+                          <CopyButton
+                            value={user.id}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 ml-1"
+                            tooltipMessage="复制用户ID"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -168,12 +195,7 @@ export default async function ProfilePage() {
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">系统信息</h3>
-                  <pre className="text-xs font-mono p-3 rounded bg-muted/50 overflow-auto max-h-48 border border-border/30">
-                    {JSON.stringify(user, null, 2)}
-                  </pre>
-                </div>
+                <ClientProfileSection userData={user} />
               </div>
             </CardContent>
           </Card>
