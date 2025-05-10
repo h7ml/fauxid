@@ -1,25 +1,27 @@
 "use server";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
+import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
 // 获取当前会话
 export async function getSession() {
-  return await getServerSession(authOptions);
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 }
 
 // 获取当前用户
 export async function getCurrentUser() {
-  const session = await getSession();
-  return session?.user;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  return data.user;
 }
 
 // 保护路由的辅助函数
 export async function protectRoute(redirectTo: string = "/sign-in") {
-  const session = await getSession();
-  if (!session) {
+  const user = await getCurrentUser();
+  if (!user) {
     redirect(redirectTo);
   }
-  return session;
+  return user;
 } 

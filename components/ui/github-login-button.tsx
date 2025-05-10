@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Github } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { createClient } from "@/utils/supabase/client";
 
 interface GitHubLoginButtonProps {
   className?: string;
@@ -22,20 +22,26 @@ export function GitHubLoginButton({
 
     setIsPending(true);
     try {
-      // 直接使用客户端的signIn方法处理
-      const result = await signIn("github", {
-        callbackUrl: "/protected",
-        redirect: true
+      const supabase = createClient();
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
-      // 如果返回结果，则表示有错误或重定向被阻止
-      if (result && !result.ok) {
-        console.error("登录失败:", result.error);
+      if (error) {
+        console.error("登录失败:", error.message);
         toast({
           title: "登录失败",
-          description: result.error || "登录过程中发生错误",
+          description: error.message || "登录过程中发生错误",
           variant: "destructive",
         });
+        setIsPending(false);
+      } else if (data) {
+        // Redirect happens automatically
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error("登录失败:", error);

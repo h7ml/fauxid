@@ -144,6 +144,10 @@ export const signInWithGithubAction = async () => {
     provider: "github",
     options: {
       redirectTo: `${siteUrl}/auth/callback`,
+      queryParams: {
+        // Add any additional OAuth scopes you want to request here
+        // https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps
+      }
     },
   });
 

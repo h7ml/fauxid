@@ -5,7 +5,9 @@ alwaysApply: true
 ---
 # 身份验证流程
 
-本项目使用Supabase进行身份验证，并为Next.js实现了自定义集成。
+本项目支持两种身份验证方式：
+1. Supabase认证（邮箱和GitHub OAuth）
+2. NextAuth.js认证（Linux.do OAuth）
 
 ## 身份验证页面
 
@@ -14,13 +16,49 @@ alwaysApply: true
 - [app/(auth-pages)/forgot-password](mdc:app/(auth-pages)/forgot-password) - 密码找回
 - [app/protected/reset-password](mdc:app/protected/reset-password) - 密码重置页面
 
+## 认证方式
+
+### Supabase认证
+- 邮箱密码登录和注册
+- GitHub OAuth登录（通过Supabase OAuth服务）
+- 密码重置功能
+
+### NextAuth.js认证
+- Linux.do OAuth登录
+- 使用JWT认证策略
+- 配置位于 [app/api/auth/[...nextauth]/auth.ts](mdc:app/api/auth/[...nextauth]/auth.ts)
+
 ## 身份验证逻辑
 
-- 身份验证状态通过Supabase客户端管理
+- Supabase身份验证状态通过Supabase客户端管理
+- NextAuth身份验证状态通过Session Provider管理
 - [middleware.ts](mdc:middleware.ts)处理路由保护和重定向
-- 通过Supabase OAuth功能支持第三方登录
-- 认证后，用户会被重定向到受保护的路由
+- 登录按钮实现：
+  - [LinuxDoLoginButton](mdc:components/ui/linux-do-login-button.tsx) - Linux.do登录（使用NextAuth）
+  - [GitHubLoginButton](mdc:components/ui/github-login-button.tsx) - GitHub登录（使用NextAuth）
+  - Supabase邮箱登录使用服务器端Action
 
 ## 受保护路由
 
-所有在`app/protected/`下的路由都需要身份验证。middleware会在允许访问这些路由前检查有效会话。
+所有在`app/protected/`下的路由都需要身份验证。middleware会在允许访问这些路由前检查有效会话（Supabase或NextAuth会话）。
+
+## 环境变量配置
+
+```bash
+# Supabase认证所需配置
+NEXT_PUBLIC_SUPABASE_URL=你的Supabase项目URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=你的Supabase项目匿名密钥
+
+# NextAuth配置
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=你的NextAuth密钥  # 可以使用 openssl rand -base64 32 生成
+
+# GitHub OAuth (NextAuth方式)
+GITHUB_CLIENT_ID=你的GitHub客户端ID
+GITHUB_CLIENT_SECRET=你的GitHub客户端密钥
+
+# Linux.do OAuth配置
+LINUX_DO_CLIENT_ID=你的Linux.do客户端ID
+LINUX_DO_CLIENT_SECRET=你的Linux.do客户端密钥
+LINUX_DO_REDIRECT_URI=http://localhost:3000/api/auth/callback/linux-do
+```

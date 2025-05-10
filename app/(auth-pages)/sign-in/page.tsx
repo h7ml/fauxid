@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { GitHubLoginButton } from "@/components/ui/github-login-button";
-import { LinuxDoLoginButton } from "@/components/ui/linux-do-login-button";
 import Link from "next/link";
 import { AtSign, Lock } from "lucide-react";
 
@@ -97,7 +96,6 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
 
             <div className="space-y-3">
               <GitHubLoginButton />
-              <LinuxDoLoginButton />
             </div>
 
             <FormMessage message={searchParams} />

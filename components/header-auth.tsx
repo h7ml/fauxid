@@ -5,15 +5,13 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Home, User, Shield, Terminal } from "lucide-react";
+import { LogOut, Home, User, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getSession } from "@/utils/next-auth";
 
 export default async function AuthButton() {
   const supabase = await createClient();
@@ -21,10 +19,6 @@ export default async function AuthButton() {
   const {
     data: { user: supabaseUser },
   } = await supabase.auth.getUser();
-
-  // 获取NextAuth会话
-  const nextAuthSession = await getSession();
-  const nextAuthUser = nextAuthSession?.user;
 
   if (!hasEnvVars) {
     return (
@@ -59,11 +53,12 @@ export default async function AuthButton() {
     );
   }
 
-  // 同时支持Supabase和NextAuth登录
-  const isLoggedIn = !!supabaseUser || !!nextAuthUser;
-  const userEmail = supabaseUser?.email || nextAuthUser?.email || "";
-  const userName = nextAuthUser?.name || userEmail;
-  const userImage = nextAuthUser?.image || "";
+  // 只使用Supabase登录
+  const isLoggedIn = !!supabaseUser;
+  const userEmail = supabaseUser?.email || "";
+  const userName = userEmail;
+  // 从GitHub OAuth获取的头像存储在user_metadata.avatar_url
+  const userImage = supabaseUser?.user_metadata?.avatar_url || "";
 
   return isLoggedIn ? (
     <div className="flex items-center gap-6">
@@ -115,36 +110,15 @@ export default async function AuthButton() {
                 <span>身份管理</span>
               </Link>
             </DropdownMenuItem>
-
-            {nextAuthUser && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/protected/next-auth-profile" className="flex items-center gap-2 cursor-pointer">
-                    <Terminal className="h-4 w-4" />
-                    <span>Linux.do 资料</span>
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {nextAuthUser ? (
-          <form action="/api/auth/signout" method="POST">
-            <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline-block">退出登录</span>
-            </Button>
-          </form>
-        ) : (
-          <form action={signOutAction}>
-            <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline-block">退出登录</span>
-            </Button>
-          </form>
-        )}
+        <form action={signOutAction}>
+          <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline-block">退出登录</span>
+          </Button>
+        </form>
       </div>
     </div>
   ) : (

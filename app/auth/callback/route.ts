@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+  const next = requestUrl.searchParams.get("next") ?? "/protected";
 
   if (code) {
     const supabase = await createClient();
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
   if (redirectTo) {
     return NextResponse.redirect(`${origin}${redirectTo}`);
   }
-
+  
   // URL to redirect to after sign up process completes
-  return NextResponse.redirect(`${origin}/protected`);
+  return NextResponse.redirect(`${origin}${next}`);
 }
