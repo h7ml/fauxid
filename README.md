@@ -29,8 +29,10 @@
 - 支持批量生成和管理多个身份信息
 
 🛡️ **用户认证与管理**
-- 基于 Supabase Auth 的完整用户认证系统
-- 支持邮箱注册、登录、密码重置
+- 多种登录方式支持
+  - 基于 Supabase Auth 的邮箱注册、登录、密码重置
+  - 支持 GitHub OAuth 登录
+  - 支持 Linux.do OAuth 登录（通过 NextAuth）
 - 用户账户管理与个人资料设置
 
 🎨 **现代化界面**
@@ -73,9 +75,22 @@ yarn
 
 复制 `.env.example` 到 `.env.local` 并填写必要的环境变量：
 
-```
+```bash
+# Supabase配置
 NEXT_PUBLIC_SUPABASE_URL=你的Supabase项目URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=你的Supabase项目匿名密钥
+
+# 站点URL，用于重定向
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# NextAuth配置
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=你的NextAuth密钥  # 可以使用 openssl rand -base64 32 生成
+
+# Linux.do OAuth配置（如果需要）
+LINUX_DO_CLIENT_ID=你的Linux.do客户端ID
+LINUX_DO_CLIENT_SECRET=你的Linux.do客户端密钥
+LINUX_DO_REDIRECT_URI=http://localhost:3000/api/auth/callback/linux-do
 ```
 
 4. 运行开发服务器
@@ -89,7 +104,9 @@ pnpm dev
 ## 技术栈
 
 - **前端框架**: [Next.js](https://nextjs.org/) - React 框架，支持服务端渲染和静态生成
-- **后端服务**: [Supabase](https://supabase.com/) - 开源的 Firebase 替代品，提供数据库、认证和存储服务
+- **后端服务**: 
+  - [Supabase](https://supabase.com/) - 开源的 Firebase 替代品，提供数据库、认证和存储服务
+  - [NextAuth.js](https://next-auth.js.org/) - 灵活的认证解决方案，用于 Linux.do 登录
 - **样式解决方案**: [Tailwind CSS](https://tailwindcss.com/) - 实用优先的 CSS 框架
 - **UI 组件**: [shadcn/ui](https://ui.shadcn.com/) - 基于 Radix UI 的可复用组件集合
 - **类型检查**: [TypeScript](https://www.typescriptlang.org/) - JavaScript 的超集，提供静态类型检查
@@ -105,7 +122,7 @@ pnpm dev
 3. 配置必要的环境变量
 4. 点击部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fh7ml%2Ffauxid.git&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&project-name=fauxid&repository-name=fauxid)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fh7ml%2Ffauxid.git&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,NEXTAUTH_URL,NEXTAUTH_SECRET&project-name=fauxid&repository-name=fauxid)
 
 ### Supabase 配置
 
@@ -114,6 +131,12 @@ pnpm dev
 3. 创建必要的数据表和存储桶
 4. 将项目 URL 和匿名密钥添加到环境变量
 
+### Linux.do OAuth配置
+
+1. 在 Linux.do 平台注册应用并获取客户端ID和密钥
+2. 设置重定向URI为 `https://your-domain.com/api/auth/callback/linux-do`
+3. 将客户端ID和密钥添加到环境变量
+
 ## 项目结构
 
 ```
@@ -121,15 +144,20 @@ fauxid/
 ├── app/                     # Next.js App Router 目录
 │   ├── (auth-pages)/        # 认证相关页面（登录、注册等）
 │   ├── actions/             # 服务器端 Actions
+│   │   └── oauth-actions.ts # OAuth认证服务器端Actions
 │   ├── protected/           # 需登录访问的页面
+│   ├── api/                 # API路由
+│   │   └── auth/            # NextAuth API端点
 │   └── ...
 ├── components/              # 可复用组件
 │   ├── identity/            # 身份相关组件
 │   ├── ui/                  # UI 组件
+│   ├── providers/           # 提供者组件（Auth等）
 │   └── ...
 ├── lib/                     # 工具函数和库
 ├── supabase/                # Supabase 相关配置
 ├── utils/                   # 实用工具
+│   └── next-auth.ts         # NextAuth辅助函数
 └── ...
 ```
 
@@ -149,5 +177,6 @@ fauxid/
 
 - [Next.js](https://nextjs.org/)
 - [Supabase](https://supabase.com/)
+- [NextAuth.js](https://next-auth.js.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)

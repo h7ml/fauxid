@@ -9,6 +9,7 @@ import Link from "next/link";
 import "@/app/globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster";
+import AuthProvider from "@/components/providers/auth-provider";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -37,60 +38,62 @@ export default function RootLayout({
         <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none opacity-60"></div>
         <div className="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-secondary/10 via-background to-background opacity-70 pointer-events-none"></div>
 
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <main className="min-h-screen flex flex-col items-center">
-            <div className="flex-1 w-full flex flex-col gap-16 items-center">
-              {/* 现代化的导航栏 */}
-              <nav className="w-full sticky top-0 z-50 apple-blur-bg py-3">
-                <div className="w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8">
-                  <div className="flex gap-5 items-center">
-                    <Link href={"/"} className="text-lg font-bold text-primary hover:text-primary/80 transition-colors">
-                      <span className="inline-block">FauxID</span>
-                    </Link>
-                    <div className="hidden md:flex items-center gap-2">
-                      <DeployButton />
+        <AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <main className="min-h-screen flex flex-col items-center">
+              <div className="flex-1 w-full flex flex-col gap-16 items-center">
+                {/* 现代化的导航栏 */}
+                <nav className="w-full sticky top-0 z-50 apple-blur-bg py-3">
+                  <div className="w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8">
+                    <div className="flex gap-5 items-center">
+                      <Link href={"/"} className="text-lg font-bold text-primary hover:text-primary/80 transition-colors">
+                        <span className="inline-block">FauxID</span>
+                      </Link>
+                      <div className="hidden md:flex items-center gap-2">
+                        <DeployButton />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
-                  </div>
+                </nav>
+
+                <div className="flex flex-col gap-16 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                  {children}
                 </div>
-              </nav>
 
-              <div className="flex flex-col gap-16 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-                {children}
-              </div>
-
-              <footer className="w-full mt-auto border-t border-t-foreground/10 py-8">
-                <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 lg:px-8 text-sm gap-4">
-                  <p className="text-muted-foreground">
-                    © {new Date().getFullYear()} FauxID. 仅用于合法用途。
-                  </p>
-                  <div className="flex items-center gap-6">
+                <footer className="w-full mt-auto border-t border-t-foreground/10 py-8">
+                  <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 lg:px-8 text-sm gap-4">
                     <p className="text-muted-foreground">
-                      技术支持：{" "}
-                      <a
-                        href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-                        target="_blank"
-                        className="font-medium hover:text-primary transition-colors"
-                        rel="noreferrer"
-                      >
-                        Supabase
-                      </a>
+                      © {new Date().getFullYear()} FauxID. 仅用于合法用途。
                     </p>
-                    <ThemeSwitcher />
+                    <div className="flex items-center gap-6">
+                      <p className="text-muted-foreground">
+                        技术支持：{" "}
+                        <a
+                          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+                          target="_blank"
+                          className="font-medium hover:text-primary transition-colors"
+                          rel="noreferrer"
+                        >
+                          Supabase
+                        </a>
+                      </p>
+                      <ThemeSwitcher />
+                    </div>
                   </div>
-                </div>
-              </footer>
-            </div>
-          </main>
-          <Toaster />
-        </ThemeProvider>
+                </footer>
+              </div>
+            </main>
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

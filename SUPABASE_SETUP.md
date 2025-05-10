@@ -1,6 +1,6 @@
-# Supabase 配置指南
+# Supabase 与 NextAuth 配置指南
 
-## 身份验证配置
+## Supabase 身份验证配置
 
 ### 1. URL 配置
 
@@ -54,17 +54,76 @@
 2. 在 **Email Auth** 部分中，确认已启用 **Enable Email Signup** 和 **Enable Email Confirmations**
 3. 如果您使用自定义 SMTP 服务，请在 **SMTP Settings** 部分配置您的邮件发送服务信息
 
+## NextAuth 身份验证配置
+
+### 1. NextAuth 设置
+
+本项目使用 NextAuth.js 实现对 Linux.do 的 OAuth 认证支持。配置如下：
+
+1. 确保 `app/api/auth/[...nextauth]/route.ts` 文件包含正确的 Linux.do OAuth 配置
+2. 在 `.env.local` 文件中设置必要的 NextAuth 环境变量
+3. 确保中间件正确配置，以同时支持 Supabase 和 NextAuth 认证
+
+### 2. Linux.do OAuth 配置
+
+要使用 Linux.do 登录，您需要：
+
+1. 在 Linux.do 平台注册一个应用
+2. 获取客户端 ID 和客户端密钥
+3. 设置正确的重定向 URI：`https://您的域名/api/auth/callback/linux-do`
+4. 将这些凭据添加到 `.env.local` 文件中
+
+```bash
+# Supabase配置
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# 站点URL配置
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+
+# NextAuth配置
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=your-nextauth-secret  # 生成命令: openssl rand -base64 32
+
+# Linux.do OAuth配置
+LINUX_DO_CLIENT_ID=your-linux-do-client-id
+LINUX_DO_CLIENT_SECRET=your-linux-do-client-secret
+LINUX_DO_REDIRECT_URI=https://your-domain.com/api/auth/callback/linux-do
+
+# Cloudflare部署标记（如需要）
+CLOUDFLARE=true
+```
+
+## 双重认证系统
+
+本项目同时支持 Supabase 和 NextAuth 两种认证系统，具有以下特点：
+
+1. **认证流程独立**：两个认证系统各自独立工作
+2. **统一会话管理**：通过中间件实现两种认证的统一保护
+3. **用户界面整合**：在登录页面上同时提供两种登录选项
+4. **无缝用户体验**：用户无需了解底层认证差异
+
 ## 项目环境变量
 
 请确保在部署环境中设置以下环境变量:
 
-```
+```bash
+# Supabase配置
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
 
-在 Cloudflare 部署时，另外设置:
+# 站点URL配置
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 
-```
+# NextAuth配置
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=your-nextauth-secret  # 生成命令: openssl rand -base64 32
+
+# Linux.do OAuth配置
+LINUX_DO_CLIENT_ID=your-linux-do-client-id
+LINUX_DO_CLIENT_SECRET=your-linux-do-client-secret
+LINUX_DO_REDIRECT_URI=https://your-domain.com/api/auth/callback/linux-do
+
+# Cloudflare部署标记（如需要）
 CLOUDFLARE=true
 ```

@@ -4,21 +4,27 @@ import Link from "next/link";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Home, User, Shield } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, Home, User, Shield, Terminal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getSession } from "@/utils/next-auth";
 
 export default async function AuthButton() {
   const supabase = await createClient();
 
   const {
-    data: { user },
+    data: { user: supabaseUser },
   } = await supabase.auth.getUser();
+
+  // 获取NextAuth会话
+  const nextAuthSession = await getSession();
+  const nextAuthUser = nextAuthSession?.user;
 
   if (!hasEnvVars) {
     return (
@@ -53,7 +59,13 @@ export default async function AuthButton() {
     );
   }
 
-  return user ? (
+  // 同时支持Supabase和NextAuth登录
+  const isLoggedIn = !!supabaseUser || !!nextAuthUser;
+  const userEmail = supabaseUser?.email || nextAuthUser?.email || "";
+  const userName = nextAuthUser?.name || userEmail;
+  const userImage = nextAuthUser?.image || "";
+
+  return isLoggedIn ? (
     <div className="flex items-center gap-6">
       <div className="hidden md:flex items-center gap-4">
         <Link
@@ -77,12 +89,16 @@ export default async function AuthButton() {
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-2 cursor-pointer">
               <Avatar className="h-8 w-8 bg-primary/10">
-                <AvatarFallback className="text-primary">
-                  {user.email?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
+                {userImage ? (
+                  <AvatarImage src={userImage} alt={userName} />
+                ) : (
+                  <AvatarFallback className="text-primary">
+                    {userName?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium">{user.email}</p>
+                <p className="text-sm font-medium">{userName}</p>
               </div>
             </div>
           </DropdownMenuTrigger>
@@ -99,14 +115,36 @@ export default async function AuthButton() {
                 <span>身份管理</span>
               </Link>
             </DropdownMenuItem>
+
+            {nextAuthUser && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/protected/next-auth-profile" className="flex items-center gap-2 cursor-pointer">
+                    <Terminal className="h-4 w-4" />
+                    <span>Linux.do 资料</span>
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <form action={signOutAction}>
-          <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline-block">退出登录</span>
-          </Button>
-        </form>
+
+        {nextAuthUser ? (
+          <form action="/api/auth/signout" method="POST">
+            <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline-block">退出登录</span>
+            </Button>
+          </form>
+        ) : (
+          <form action={signOutAction}>
+            <Button type="submit" variant={"outline"} size="sm" className="gap-1.5">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline-block">退出登录</span>
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   ) : (

@@ -311,7 +311,7 @@ export default function IdentityCard({
 
               <CardDescription className="flex items-center">
                 <Calendar className="w-3.5 h-3.5 mr-1 text-muted-foreground" />
-                <span>{new Date(identity.birth_date).toLocaleDateString()}</span>
+                <span>{new Date(identity.birth_date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' })}</span>
                 <span className="ml-1 px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded">{age}岁</span>
               </CardDescription>
 
