@@ -1,10 +1,11 @@
-import { signUpAction, signInWithGithubAction } from "@/app/actions";
+import { signUpAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SocialLoginButton } from "@/components/ui/social-login-button";
+import { GitHubLoginButton } from "@/components/ui/github-login-button";
+import { LinuxDoLoginButton } from "@/components/ui/linux-do-login-button";
 import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
 import { AtSign, Lock, UserPlus } from "lucide-react";
@@ -102,10 +103,10 @@ export default async function Signup(props: {
               </div>
             </div>
 
-            <SocialLoginButton
-              provider="github"
-              formAction={signInWithGithubAction}
-            />
+            <div className="space-y-3">
+              <GitHubLoginButton />
+              <LinuxDoLoginButton />
+            </div>
 
             <FormMessage message={searchParams} />
           </form>

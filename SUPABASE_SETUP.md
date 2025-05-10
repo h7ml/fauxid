@@ -54,13 +54,23 @@
 2. 在 **Email Auth** 部分中，确认已启用 **Enable Email Signup** 和 **Enable Email Confirmations**
 3. 如果您使用自定义 SMTP 服务，请在 **SMTP Settings** 部分配置您的邮件发送服务信息
 
+### 4. Supabase GitHub OAuth 配置
+
+Supabase 支持通过 GitHub OAuth 进行登录，配置步骤如下：
+
+1. 在 [GitHub 开发者设置](https://github.com/settings/developers) 创建新的 OAuth 应用
+2. 配置授权回调 URL 为 `https://your-project.supabase.co/auth/v1/callback`
+3. 在 Supabase 控制台的 **Authentication → Providers → GitHub** 中启用 GitHub 登录
+4. 配置 GitHub Client ID 和 Client Secret
+5. 启用 "Configure GitHub provider with Implicit Grant" 选项
+
 ## NextAuth 身份验证配置
 
 ### 1. NextAuth 设置
 
-本项目使用 NextAuth.js 实现对 Linux.do 的 OAuth 认证支持。配置如下：
+本项目使用 NextAuth.js 实现对 Linux.do 和 GitHub 的 OAuth 认证支持。配置如下：
 
-1. 确保 `app/api/auth/[...nextauth]/route.ts` 文件包含正确的 Linux.do OAuth 配置
+1. 确保 `app/api/auth/[...nextauth]/auth.ts` 文件包含正确的 OAuth 提供商配置
 2. 在 `.env.local` 文件中设置必要的 NextAuth 环境变量
 3. 确保中间件正确配置，以同时支持 Supabase 和 NextAuth 认证
 
@@ -73,26 +83,14 @@
 3. 设置正确的重定向 URI：`https://您的域名/api/auth/callback/linux-do`
 4. 将这些凭据添加到 `.env.local` 文件中
 
-```bash
-# Supabase配置
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+### 3. GitHub OAuth 配置 (NextAuth 方式)
 
-# 站点URL配置
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
+要使用 NextAuth.js 的 GitHub 登录，您需要：
 
-# NextAuth配置
-NEXTAUTH_URL=https://your-domain.com
-NEXTAUTH_SECRET=your-nextauth-secret  # 生成命令: openssl rand -base64 32
-
-# Linux.do OAuth配置
-LINUX_DO_CLIENT_ID=your-linux-do-client-id
-LINUX_DO_CLIENT_SECRET=your-linux-do-client-secret
-LINUX_DO_REDIRECT_URI=https://your-domain.com/api/auth/callback/linux-do
-
-# Cloudflare部署标记（如需要）
-CLOUDFLARE=true
-```
+1. 在 [GitHub 开发者设置](https://github.com/settings/developers) 创建新的 OAuth 应用
+2. 配置授权回调 URL 为 `https://您的域名/api/auth/callback/github`
+3. 获取 Client ID 和 Client Secret
+4. 将这些凭据添加到 `.env.local` 文件中
 
 ## 双重认证系统
 
@@ -100,8 +98,12 @@ CLOUDFLARE=true
 
 1. **认证流程独立**：两个认证系统各自独立工作
 2. **统一会话管理**：通过中间件实现两种认证的统一保护
-3. **用户界面整合**：在登录页面上同时提供两种登录选项
-4. **无缝用户体验**：用户无需了解底层认证差异
+3. **用户界面整合**：在登录页面上同时提供多种登录选项
+4. **多种登录选择**：
+   - 邮箱/密码登录 (Supabase)
+   - GitHub 登录 (通过 Supabase 或 NextAuth)
+   - Linux.do 登录 (通过 NextAuth)
+5. **无缝用户体验**：用户无需了解底层认证差异
 
 ## 项目环境变量
 
@@ -118,6 +120,10 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 # NextAuth配置
 NEXTAUTH_URL=https://your-domain.com
 NEXTAUTH_SECRET=your-nextauth-secret  # 生成命令: openssl rand -base64 32
+
+# GitHub OAuth配置 (NextAuth方式)
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
 
 # Linux.do OAuth配置
 LINUX_DO_CLIENT_ID=your-linux-do-client-id

@@ -1,7 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/auth";
 import { redirect } from "next/navigation";
 
 // 获取当前会话

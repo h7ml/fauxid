@@ -31,8 +31,9 @@
 🛡️ **用户认证与管理**
 - 多种登录方式支持
   - 基于 Supabase Auth 的邮箱注册、登录、密码重置
-  - 支持 GitHub OAuth 登录
-  - 支持 Linux.do OAuth 登录（通过 NextAuth）
+  - GitHub OAuth 登录（两种方式：Supabase 和 NextAuth）
+  - Linux.do OAuth 登录（通过 NextAuth.js）
+- 统一的用户会话管理
 - 用户账户管理与个人资料设置
 
 🎨 **现代化界面**
@@ -106,7 +107,7 @@ pnpm dev
 - **前端框架**: [Next.js](https://nextjs.org/) - React 框架，支持服务端渲染和静态生成
 - **后端服务**: 
   - [Supabase](https://supabase.com/) - 开源的 Firebase 替代品，提供数据库、认证和存储服务
-  - [NextAuth.js](https://next-auth.js.org/) - 灵活的认证解决方案，用于 Linux.do 登录
+  - [NextAuth.js](https://next-auth.js.org/) - 灵活的认证解决方案，用于 GitHub 和 Linux.do 登录
 - **样式解决方案**: [Tailwind CSS](https://tailwindcss.com/) - 实用优先的 CSS 框架
 - **UI 组件**: [shadcn/ui](https://ui.shadcn.com/) - 基于 Radix UI 的可复用组件集合
 - **类型检查**: [TypeScript](https://www.typescriptlang.org/) - JavaScript 的超集，提供静态类型检查
@@ -131,11 +132,28 @@ pnpm dev
 3. 创建必要的数据表和存储桶
 4. 将项目 URL 和匿名密钥添加到环境变量
 
-### Linux.do OAuth配置
+### Linux.do OAuth 配置
 
-1. 在 Linux.do 平台注册应用并获取客户端ID和密钥
-2. 设置重定向URI为 `https://your-domain.com/api/auth/callback/linux-do`
-3. 将客户端ID和密钥添加到环境变量
+1. 在 Linux.do 平台注册应用并获取客户端 ID 和密钥
+2. 配置重定向 URI: `https://your-domain.com/api/auth/callback/linux-do`
+3. 将以下环境变量添加到你的部署环境:
+   ```
+   LINUX_DO_CLIENT_ID=你的Linux.do客户端ID
+   LINUX_DO_CLIENT_SECRET=你的Linux.do客户端密钥
+   LINUX_DO_REDIRECT_URI=https://your-domain.com/api/auth/callback/linux-do
+   NEXTAUTH_URL=https://your-domain.com
+   NEXTAUTH_SECRET=你的密钥 # 使用 openssl rand -base64 32 生成
+   ```
+
+### GitHub OAuth 配置 (NextAuth 方式)
+
+1. 在 [GitHub 开发者设置](https://github.com/settings/developers) 创建新的 OAuth 应用
+2. 配置重定向 URI: `https://your-domain.com/api/auth/callback/github`
+3. 将以下环境变量添加到你的部署环境:
+   ```
+   GITHUB_CLIENT_ID=你的GitHub客户端ID
+   GITHUB_CLIENT_SECRET=你的GitHub客户端密钥
+   ```
 
 ## 项目结构
 
