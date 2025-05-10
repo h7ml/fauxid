@@ -6,6 +6,7 @@ import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Link from "next/link";
+import Image from "next/image";
 import "@/app/globals.css";
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster";
@@ -52,7 +53,13 @@ export default function RootLayout({
                   <div className="w-full max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8">
                     <div className="flex gap-5 items-center">
                       <Link href={"/"} className="text-lg font-bold text-primary hover:text-primary/80 transition-colors">
-                        <span className="inline-block">FauxID</span>
+                        <Image
+                          src="/images/logo.jpg"
+                          alt="FauxID Logo"
+                          width={120}
+                          height={40}
+                          className="h-10 w-auto object-contain"
+                        />
                       </Link>
                       <div className="hidden md:flex items-center gap-2">
                         <DeployButton />
@@ -71,7 +78,7 @@ export default function RootLayout({
                 <footer className="w-full mt-auto border-t border-t-foreground/10 py-8">
                   <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between px-4 sm:px-6 lg:px-8 text-sm gap-4">
                     <p className="text-muted-foreground">
-                      © {new Date().getFullYear()} FauxID. 仅用于合法用途。
+                      © {new Date().getFullYear()} <Image src="/images/logo.jpg" alt="FauxID Logo" width={60} height={20} className="inline-block h-5 w-auto object-contain align-middle mx-1" /> 仅用于合法用途。
                     </p>
                     <div className="flex items-center gap-6">
                       <p className="text-muted-foreground">

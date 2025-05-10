@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png" alt="FauxID - 免费虚拟身份生成器" width="500">
+  <img src="https://fauxid.h7ml.cn/images/logo.jpg" alt="FauxID - 免费虚拟身份生成器" width="500">
   <h1 align="center">FauxID - 免费虚拟身份生成器</h1>
 </p>
 

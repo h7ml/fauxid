@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import IdentityGeneratorForm from "@/components/identity/identity-generator-form";
 import { generateRandomIdentity } from "@/lib/identity-generator";
@@ -124,7 +125,7 @@ export default function Home() {
       <footer className="w-full py-6 border-t">
         <div className="container px-4 md:px-6 mx-auto flex flex-col items-center">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} FauxID. 仅用于合法用途。
+            © {new Date().getFullYear()} <Image src="/images/logo.jpg" alt="FauxID Logo" width={60} height={20} className="inline-block h-5 w-auto object-contain align-middle mx-1" /> 仅用于合法用途。
           </p>
         </div>
       </footer>
