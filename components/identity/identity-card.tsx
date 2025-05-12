@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { safeCopyToClipboard } from "@/utils/clipboard";
 
 interface IdentityCardProps {
   identity: IdentityType;
@@ -108,13 +109,21 @@ export default function IdentityCard({
   };
 
   // 复制文本并显示提示
-  const copyToClipboard = (text: string, description: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "复制成功",
-      description: description,
-      variant: "default",
-    });
+  const copyToClipboard = async (text: string, description: string) => {
+    const success = await safeCopyToClipboard(text);
+    if (success) {
+      toast({
+        title: "复制成功",
+        description: description,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板",
+        variant: "destructive",
+      });
+    }
   };
 
   // 计算国旗表情

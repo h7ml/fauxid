@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Home, User, Shield } from "lucide-react";
+import { LogOut, Home, User, Shield, QrCode } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,6 +77,13 @@ export default async function AuthButton() {
           <User className="h-4 w-4" />
           <span>个人中心</span>
         </Link>
+        <Link
+          href="/tools/csv-to-authenticator"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+        >
+          <QrCode className="h-4 w-4" />
+          <span>认证工具</span>
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
@@ -110,6 +117,12 @@ export default async function AuthButton() {
                 <span>身份管理</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/tools/csv-to-authenticator" className="flex items-center gap-2 cursor-pointer">
+                <QrCode className="h-4 w-4" />
+                <span>认证工具</span>
+              </Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -129,6 +142,14 @@ export default async function AuthButton() {
       >
         <Home className="h-4 w-4" />
         <span>首页</span>
+      </Link>
+
+      <Link
+        href="/tools/csv-to-authenticator"
+        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden md:flex items-center gap-1.5"
+      >
+        <QrCode className="h-4 w-4" />
+        <span>认证工具</span>
       </Link>
 
       <div className="flex gap-2">

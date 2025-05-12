@@ -39,6 +39,7 @@ import {
   Copy
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { safeCopyToClipboard } from "@/utils/clipboard";
 
 interface IdentityDetailProps {
   identity: IdentityType;
@@ -232,12 +233,20 @@ export default function IdentityDetail({ identity }: IdentityDetailProps) {
   }
 
   // 复制文本并显示提示
-  function copyToClipboard(text: string, description: string) {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "复制成功",
-      description: description,
-    });
+  async function copyToClipboard(text: string, description: string) {
+    const success = await safeCopyToClipboard(text);
+    if (success) {
+      toast({
+        title: "复制成功",
+        description: description,
+      });
+    } else {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板",
+        variant: "destructive",
+      });
+    }
   }
 
   // 获取国家信息

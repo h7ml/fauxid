@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { safeCopyToClipboard } from "@/utils/clipboard";
 
 interface IdentityTableProps {
   identities: IdentityType[];
@@ -148,13 +149,21 @@ export default function IdentityTable({ identities, onDelete }: IdentityTablePro
   };
 
   // 复制文本到剪贴板
-  const copyToClipboard = (text: string, description: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "复制成功",
-      description,
-      variant: "default",
-    });
+  const copyToClipboard = async (text: string, description: string) => {
+    const success = await safeCopyToClipboard(text);
+    if (success) {
+      toast({
+        title: "复制成功",
+        description,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板",
+        variant: "destructive",
+      });
+    }
   };
 
   // 截断文本

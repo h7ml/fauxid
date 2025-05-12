@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import IdentityGeneratorForm from "@/components/identity/identity-generator-form";
 import { generateRandomIdentity } from "@/lib/identity-generator";
 import IdentityCard from "@/components/identity/identity-card";
-import { ArrowRight, CheckCircle, ScanFace, Sparkles, User, Users } from "lucide-react";
+import { ArrowRight, CheckCircle, ScanFace, Sparkles, User, Users, QrCode } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "FauxID - 免费虚拟身份生成器",
@@ -98,6 +98,39 @@ export default function Home() {
                 支持一次性生成多个身份信息，提高工作效率
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tools Section */}
+      <section className="w-full py-12 md:py-16 lg:py-20 border-y border-primary/10 theme-transition">
+        <div className="container px-4 md:px-6 mx-auto">
+          <div className="flex flex-col items-center space-y-4 text-center mb-8">
+            <div className="space-y-2 max-w-[800px]">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">实用工具</h2>
+              <p className="text-muted-foreground md:text-xl/relaxed">
+                除了身份生成，我们还提供其他实用工具帮助您提高效率
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+            <Link href="/tools/csv-to-authenticator" className="group">
+              <div className="bg-background p-6 rounded-xl border border-border/40 shadow-sm hover:shadow-md transition-all duration-200 h-full flex flex-col">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <QrCode className="h-6 w-6 text-primary" />
+                  </div>
+                  <Button variant="ghost" size="icon" className="group-hover:translate-x-1 transition-transform duration-200">
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <h3 className="text-xl font-bold mb-2">CSV转Authenticator</h3>
+                <p className="text-muted-foreground flex-grow">
+                  将CSV格式的双因素认证密钥转换为Authenticator应用可扫描的QR码
+                </p>
+              </div>
+            </Link>
+            {/* 这里可以添加更多工具卡片 */}
           </div>
         </div>
       </section>
