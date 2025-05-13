@@ -98,6 +98,10 @@ const config = {
             opacity: "0.8"
           },
         },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.85" },
+        },
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
@@ -140,6 +144,7 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-neon": "pulse-neon 2s infinite",
+        "pulse-slow": "pulse-slow 3s ease-in-out infinite",
         "float": "float 6s ease-in-out infinite",
         "circuit-flow": "circuit-flow 3s linear infinite",
         "cyber-spin": "cyber-spin 8s linear infinite",
