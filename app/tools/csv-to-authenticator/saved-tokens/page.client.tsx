@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getUserAuthenticatorTokens, deleteAuthenticatorToken } from "@/app/actions/authenticator-actions";
+import { getUserAuthenticatorTokens, deleteAllAuthenticatorTokens } from "@/app/actions/authenticator-actions";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SavedTokensPageClient() {
@@ -25,56 +25,28 @@ export default function SavedTokensPageClient() {
   const handleDeleteAllTokens = async () => {
     try {
       setDeletingAllTokens(true);
-      const response = await getUserAuthenticatorTokens();
+      // 使用优化后的批量删除函数
+      const response = await deleteAllAuthenticatorTokens();
 
-      if (!response.success || !response.data) {
-        toast({
-          title: "获取令牌失败",
-          description: response.error || "获取令牌列表失败",
-          variant: "destructive",
-        });
-        setDeletingAllTokens(false);
-        setShowDeleteDialog(false);
-        return;
-      }
+      if (response.success) {
+        if (response.deletedCount && response.deletedCount > 0) {
+          toast({
+            title: "批量删除完成",
+            description: `成功删除 ${response.deletedCount} 个令牌`
+          });
 
-      const tokens = response.data;
-      if (tokens.length === 0) {
-        toast({
-          title: "没有需要删除的令牌",
-          description: "令牌列表为空"
-        });
-        setDeletingAllTokens(false);
-        setShowDeleteDialog(false);
-        return;
-      }
-
-      let successCount = 0;
-      let failCount = 0;
-
-      // 逐个删除所有令牌
-      for (const token of tokens) {
-        if (!token.id) continue;
-        const response = await deleteAuthenticatorToken(token.id);
-        if (response.success) {
-          successCount++;
+          // 刷新页面以显示更新后的状态
+          window.location.reload();
         } else {
-          failCount++;
+          toast({
+            title: "没有需要删除的令牌",
+            description: "令牌列表已为空"
+          });
         }
-      }
-
-      if (successCount > 0) {
-        toast({
-          title: "批量删除完成",
-          description: `成功删除 ${successCount} 个令牌${failCount > 0 ? `，${failCount} 个删除失败` : ''}`
-        });
-
-        // 刷新页面以显示更新后的状态
-        window.location.reload();
       } else {
         toast({
           title: "删除失败",
-          description: "未能删除任何令牌",
+          description: response.error || "删除令牌时发生错误",
           variant: "destructive"
         });
       }

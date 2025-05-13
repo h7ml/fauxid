@@ -149,6 +149,73 @@ export async function deleteAuthenticatorToken(id: string) {
   }
 }
 
+// 批量删除令牌
+export async function deleteBulkAuthenticatorTokens(ids: string[]) {
+  try {
+    const supabase = await createClient();
+    
+    // 验证用户登录状态
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: "需要登录才能删除令牌" };
+    }
+    
+    if (ids.length === 0) {
+      return { success: true, deletedCount: 0 };
+    }
+    
+    // 批量删除令牌 - 使用 in 操作符一次性删除多个令牌
+    const { error, count } = await supabase
+      .from("authenticator_tokens")
+      .delete({ count: 'exact' }) // 请求返回删除的记录数
+      .in("id", ids)
+      .eq("user_id", user.id);
+    
+    if (error) {
+      console.error("批量删除令牌失败:", error);
+      return { success: false, error: error.message };
+    }
+    
+    revalidatePath("/tools/csv-to-authenticator");
+    return { success: true, deletedCount: count };
+  } catch (error) {
+    console.error("批量删除令牌时发生错误:", error);
+    return { success: false, error: "批量删除令牌时发生错误" };
+  }
+}
+
+// 删除所有令牌
+export async function deleteAllAuthenticatorTokens() {
+  try {
+    const supabase = await createClient();
+    
+    // 验证用户登录状态
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: false, error: "需要登录才能删除令牌" };
+    }
+    
+    // 删除当前用户的所有令牌
+    const { error, count } = await supabase
+      .from("authenticator_tokens")
+      .delete({ count: 'exact' }) // 请求返回删除的记录数
+      .eq("user_id", user.id);
+    
+    if (error) {
+      console.error("删除所有令牌失败:", error);
+      return { success: false, error: error.message };
+    }
+    
+    revalidatePath("/tools/csv-to-authenticator");
+    return { success: true, deletedCount: count };
+  } catch (error) {
+    console.error("删除所有令牌时发生错误:", error);
+    return { success: false, error: "删除所有令牌时发生错误" };
+  }
+}
+
 // 切换收藏状态
 export async function toggleFavoriteToken(id: string) {
   try {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getUserAuthenticatorTokens, deleteAuthenticatorToken, toggleFavoriteToken, AuthenticatorToken } from "@/app/actions/authenticator-actions";
+import { getUserAuthenticatorTokens, deleteAuthenticatorToken, toggleFavoriteToken, AuthenticatorToken, deleteBulkAuthenticatorTokens, deleteAllAuthenticatorTokens } from "@/app/actions/authenticator-actions";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,35 +148,33 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
 
     try {
       setDeletingAllTokens(true);
-      let successCount = 0;
-      let failCount = 0;
-
-      // 逐个删除所有令牌
-      for (const token of tokens) {
-        if (!token.id) continue;
-        const response = await deleteAuthenticatorToken(token.id);
-        if (response.success) {
-          successCount++;
+      
+      // 使用优化的批量删除函数
+      const response = await deleteAllAuthenticatorTokens();
+      
+      if (response.success) {
+        if (response.deletedCount && response.deletedCount > 0) {
+          toast({
+            title: "批量删除完成",
+            description: `成功删除 ${response.deletedCount} 个令牌`
+          });
         } else {
-          failCount++;
+          toast({
+            title: "没有需要删除的令牌",
+            description: "令牌列表已为空"
+          });
         }
-      }
-
-      // 删除完成后刷新令牌列表
-      await fetchTokens();
-
-      if (successCount > 0) {
-        toast({
-          title: "批量删除完成",
-          description: `成功删除 ${successCount} 个令牌${failCount > 0 ? `，${failCount} 个删除失败` : ''}`
-        });
       } else {
         toast({
           title: "删除失败",
-          description: "未能删除任何令牌",
+          description: response.error || "删除令牌时发生错误",
           variant: "destructive"
         });
       }
+      
+      // 刷新令牌列表
+      await fetchTokens();
+      
     } catch (error) {
       console.error("批量删除令牌时发生错误:", error);
       toast({
@@ -332,31 +330,29 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
 
     try {
       setDeletingDuplicates(true);
-      let successCount = 0;
-      let failCount = 0;
-
-      // 逐个删除重复项
-      for (const id of duplicatesToDelete) {
-        const response = await deleteAuthenticatorToken(id);
-        if (response.success) {
-          successCount++;
+      
+      // 使用批量删除功能
+      const response = await deleteBulkAuthenticatorTokens(duplicatesToDelete);
+      
+      if (response.success) {
+        if (response.deletedCount && response.deletedCount > 0) {
+          // 删除完成后刷新令牌列表
+          await fetchTokens();
+          
+          toast({
+            title: "删除重复项完成",
+            description: `成功删除 ${response.deletedCount} 个重复项`
+          });
         } else {
-          failCount++;
+          toast({
+            title: "没有需要删除的重复项",
+            description: "未找到需要删除的重复令牌"
+          });
         }
-      }
-
-      // 删除完成后刷新令牌列表
-      if (successCount > 0) {
-        await fetchTokens();
-
-        toast({
-          title: "删除重复项完成",
-          description: `成功删除 ${successCount} 个重复项${failCount > 0 ? `，${failCount} 个删除失败` : ''}`
-        });
       } else {
         toast({
           title: "删除失败",
-          description: "未能删除任何重复项",
+          description: response.error || "删除重复项时发生错误",
           variant: "destructive"
         });
       }
