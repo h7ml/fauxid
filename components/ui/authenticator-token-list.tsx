@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ import {
   QrCode, Star, Trash2, Search, AlertCircle, StarOff,
   Filter, Download, RefreshCw, DownloadCloud, Copy, Layers,
   AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-  Eraser, Trash
+  Eraser, Trash, ChevronDown
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -71,6 +72,12 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
+  // 多选状态
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
+  const [showBatchDeleteDialog, setShowBatchDeleteDialog] = useState<boolean>(false);
+  const [deletingSelectedTokens, setDeletingSelectedTokens] = useState<boolean>(false);
+
   // 弹窗状态
   const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
   const [deletingDuplicates, setDeletingDuplicates] = useState<boolean>(false);
@@ -87,6 +94,110 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterBy, showDuplicates]);
+
+  // 当过滤条件或分页变化时，清空选择
+  useEffect(() => {
+    setSelectedRows(new Set());
+    setIsSelectAll(false);
+  }, [searchQuery, filterBy, sortBy, showDuplicates, currentPage, pageSize]);
+
+  // 处理选择/取消选择单行
+  const handleSelectRow = (id: string | undefined) => {
+    if (!id) return;
+
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+
+    // 检查是否全选
+    const currentPageIds = paginatedTokens
+      .map(token => token.id)
+      .filter((id): id is string => !!id);
+
+    setIsSelectAll(currentPageIds.length > 0 &&
+      currentPageIds.every(id => newSelected.has(id)));
+  };
+
+  // 处理全选/取消全选
+  const handleSelectAll = () => {
+    if (isSelectAll) {
+      // 取消选择当前页所有行
+      const newSelected = new Set(selectedRows);
+      paginatedTokens.forEach(token => {
+        if (token.id) newSelected.delete(token.id);
+      });
+      setSelectedRows(newSelected);
+      setIsSelectAll(false);
+    } else {
+      // 选择当前页所有行
+      const newSelected = new Set(selectedRows);
+      paginatedTokens.forEach(token => {
+        if (token.id) newSelected.add(token.id);
+      });
+      setSelectedRows(newSelected);
+      setIsSelectAll(true);
+    }
+  };
+
+  // 批量删除选中的令牌
+  const handleDeleteSelected = async () => {
+    const selectedIds = Array.from(selectedRows);
+    if (selectedIds.length === 0) {
+      toast({
+        title: "没有选中任何令牌",
+        description: "请先选择要删除的令牌"
+      });
+      return;
+    }
+
+    try {
+      setDeletingSelectedTokens(true);
+
+      // 使用批量删除功能
+      const response = await deleteBulkAuthenticatorTokens(selectedIds);
+
+      if (response.success) {
+        if (response.deletedCount && response.deletedCount > 0) {
+          // 删除完成后刷新令牌列表
+          await fetchTokens();
+
+          // 清空选择
+          setSelectedRows(new Set());
+          setIsSelectAll(false);
+
+          toast({
+            title: "批量删除完成",
+            description: `成功删除 ${response.deletedCount} 个令牌`
+          });
+        } else {
+          toast({
+            title: "没有删除任何令牌",
+            description: "可能令牌已被删除或无权限删除"
+          });
+        }
+      } else {
+        toast({
+          title: "删除失败",
+          description: response.error || "删除令牌时发生错误",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("批量删除令牌时发生错误:", error);
+      toast({
+        title: "操作失败",
+        description: "批量删除令牌时发生未知错误",
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingSelectedTokens(false);
+      setShowBatchDeleteDialog(false);
+    }
+  };
 
   const fetchTokens = async () => {
     try {
@@ -148,10 +259,10 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
 
     try {
       setDeletingAllTokens(true);
-      
+
       // 使用优化的批量删除函数
       const response = await deleteAllAuthenticatorTokens();
-      
+
       if (response.success) {
         if (response.deletedCount && response.deletedCount > 0) {
           toast({
@@ -171,10 +282,10 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
           variant: "destructive"
         });
       }
-      
+
       // 刷新令牌列表
       await fetchTokens();
-      
+
     } catch (error) {
       console.error("批量删除令牌时发生错误:", error);
       toast({
@@ -330,15 +441,15 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
 
     try {
       setDeletingDuplicates(true);
-      
+
       // 使用批量删除功能
       const response = await deleteBulkAuthenticatorTokens(duplicatesToDelete);
-      
+
       if (response.success) {
         if (response.deletedCount && response.deletedCount > 0) {
           // 删除完成后刷新令牌列表
           await fetchTokens();
-          
+
           toast({
             title: "删除重复项完成",
             description: `成功删除 ${response.deletedCount} 个重复项`
@@ -559,56 +670,102 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
 
       <CardContent className={`relative z-10 ${!hideHeader ? 'pt-0' : 'pt-4'}`}>
         {showControls && tokens.length > 0 && (
-          <div className="flex flex-col md:flex-row gap-2 items-start md:items-center mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索令牌名称、发行者或密钥..."
-                value={searchQuery}
-                onChange={handleSearch}
-                className="pl-9 h-10 focus-visible:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2 w-full md:w-auto">
-              <Select value={filterBy} onValueChange={handleFilterChange}>
-                <SelectTrigger className="h-10 w-full md:w-[140px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
-                  <SelectValue placeholder="全部令牌" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部令牌</SelectItem>
-                  <SelectItem value="favorites">收藏的令牌</SelectItem>
-                  <SelectItem value="duplicates">重复的令牌</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="h-10 w-full md:w-[140px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
-                  <SelectValue placeholder="排序方式" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="favorite">收藏优先</SelectItem>
-                  <SelectItem value="name">按名称</SelectItem>
-                  <SelectItem value="issuer">按发行者</SelectItem>
-                  <SelectItem value="newest">最新添加</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {processedTokens.length > PAGE_SIZES[0] && (
-                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className="h-10 w-full md:w-[110px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
-                    <SelectValue placeholder="每页数量" />
+          <>
+            <div className="flex flex-col md:flex-row gap-2 items-start md:items-center mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索令牌名称、发行者或密钥..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="pl-9 h-10 focus-visible:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                <Select value={filterBy} onValueChange={handleFilterChange}>
+                  <SelectTrigger className="h-10 w-full md:w-[140px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
+                    <SelectValue placeholder="全部令牌" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAGE_SIZES.map(size => (
-                      <SelectItem key={size} value={size.toString()}>
-                        {size} 条/页
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="all">全部令牌</SelectItem>
+                    <SelectItem value="favorites">收藏的令牌</SelectItem>
+                    <SelectItem value="duplicates">重复的令牌</SelectItem>
                   </SelectContent>
                 </Select>
-              )}
+
+                <Select value={sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="h-10 w-full md:w-[140px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
+                    <SelectValue placeholder="排序方式" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="favorite">收藏优先</SelectItem>
+                    <SelectItem value="name">按名称</SelectItem>
+                    <SelectItem value="issuer">按发行者</SelectItem>
+                    <SelectItem value="newest">最新添加</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {processedTokens.length > PAGE_SIZES[0] && (
+                  <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                    <SelectTrigger className="h-10 w-full md:w-[110px] focus:ring-cyber-blue/20 border-border/30 bg-background/60 backdrop-blur-sm">
+                      <SelectValue placeholder="每页数量" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZES.map(size => (
+                        <SelectItem key={size} value={size.toString()}>
+                          {size} 条/页
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* 批量操作栏 */}
+            {selectedRows.size > 0 && (
+              <div className="flex items-center justify-between p-2 px-3 mb-4 bg-primary/5 border border-border rounded-md shadow-sm transition-all duration-300 ease-in-out">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="select-all"
+                    checked={isSelectAll}
+                    onCheckedChange={handleSelectAll}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <label htmlFor="select-all" className="text-sm flex items-center gap-2">
+                    已选择 <span className="font-medium text-primary">{selectedRows.size}</span> 项
+                    {selectedRows.size > 0 && (
+                      <Badge
+                        variant="outline"
+                        className="ml-2 bg-primary/10 hover:bg-primary/20 text-primary"
+                      >
+                        {Math.round(selectedRows.size / processedTokens.length * 100)}%
+                      </Badge>
+                    )}
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedRows(new Set())}
+                    className="h-8 text-xs border-border/60 hover:bg-background/80"
+                  >
+                    取消选择
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setShowBatchDeleteDialog(true)}
+                    className="h-8 text-xs"
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    删除所选
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {findDuplicateKeys.size > 0 && !hideHeader && (
@@ -645,6 +802,72 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-muted/20 bg-muted/10">
+                    {showControls && (
+                      <TableHead className="w-[40px]" title="选择">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <div className="flex items-center cursor-pointer">
+                              <Checkbox
+                                checked={isSelectAll}
+                                onCheckedChange={handleSelectAll}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                aria-label="全选当前页"
+                              />
+                              <ChevronDown className="h-3 w-3 ml-1 text-muted-foreground" />
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-40">
+                            <DropdownMenuLabel className="text-xs">行选择操作</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleSelectAll}>
+                              {isSelectAll ? "取消全选" : "选择当前页"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                // 选择所有收藏的令牌
+                                const newSelected = new Set(selectedRows);
+                                paginatedTokens.forEach(token => {
+                                  if (token.id && token.is_favorite) newSelected.add(token.id);
+                                });
+                                setSelectedRows(newSelected);
+                                setIsSelectAll(paginatedTokens.every(token =>
+                                  !token.id || newSelected.has(token.id)
+                                ));
+                              }}
+                            >
+                              选择收藏项
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                // 反选当前页
+                                const newSelected = new Set(selectedRows);
+                                paginatedTokens.forEach(token => {
+                                  if (!token.id) return;
+                                  if (newSelected.has(token.id)) {
+                                    newSelected.delete(token.id);
+                                  } else {
+                                    newSelected.add(token.id);
+                                  }
+                                });
+                                setSelectedRows(newSelected);
+                                setIsSelectAll(paginatedTokens.every(token =>
+                                  !token.id || newSelected.has(token.id)
+                                ));
+                              }}
+                            >
+                              反选当前页
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setSelectedRows(new Set())}
+                              className="text-red-500"
+                            >
+                              清空选择
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableHead>
+                    )}
                     <TableHead className="w-[60px]" title="收藏状态"></TableHead>
                     <TableHead>名称</TableHead>
                     <TableHead className="hidden sm:table-cell">发行者</TableHead>
@@ -658,11 +881,37 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
                     const isMarkedForDeletion = token.id && duplicatesToDelete.includes(token.id);
 
                     return (
-                      <TableRow
-                        key={token.id}
-                        className={`hover:bg-muted/30 transition-all ${isDuplicate ? (isMarkedForDeletion ? 'bg-red-500/5 opacity-70' : 'bg-amber-500/5') : ''
-                          }`}
-                      >
+                                              <TableRow
+                          key={token.id}
+                          className={`hover:bg-muted/30 transition-all ${isDuplicate ? (isMarkedForDeletion ? 'bg-red-500/5 opacity-70' : 'bg-amber-500/5') : ''
+                          } ${token.id && selectedRows.has(token.id) ? 'bg-primary/5 border-l-2 border-l-primary' : ''}`}
+                          onClick={(e) => {
+                            // 不要在点击按钮或复制按钮时触发行选择
+                            if (
+                              e.target instanceof HTMLElement &&
+                              (e.target.tagName === 'BUTTON' || 
+                              e.target.closest('button') ||
+                              e.target.tagName === 'INPUT' ||
+                              e.target.closest('input'))
+                            ) {
+                              return;
+                            }
+                            handleSelectRow(token.id);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                        {showControls && (
+                          <TableCell className="p-2">
+                            <div className="flex items-center justify-center">
+                              <Checkbox
+                                checked={token.id ? selectedRows.has(token.id) : false}
+                                onCheckedChange={() => handleSelectRow(token.id)}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                                disabled={!token.id}
+                              />
+                            </div>
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -936,6 +1185,59 @@ export default function AuthenticatorTokenList({ showControls = true, hideHeader
                 </>
               ) : (
                 "确认删除全部"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量删除选中项确认对话框 */}
+      <Dialog open={showBatchDeleteDialog} onOpenChange={setShowBatchDeleteDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              删除选中的认证令牌
+            </DialogTitle>
+            <DialogDescription>
+              您确定要删除选中的 <span className="font-medium">{selectedRows.size}</span> 个认证令牌吗？此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-3">
+            <div className="p-3 rounded-md bg-red-500/10 border border-red-500/20 text-sm">
+              <p className="mb-2">删除内容：</p>
+              <p>• 选中项数量: <strong>{selectedRows.size}</strong> 个</p>
+              <p>• 可能包含已收藏的令牌</p>
+              <div className="h-px bg-red-500/20 my-2"></div>
+              <p className="text-red-500 font-medium">此操作将永久删除选中的令牌！</p>
+            </div>
+
+            <p className="text-sm mt-3 text-muted-foreground">
+              删除后将自动刷新列表。此操作不可撤销，确认继续？
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBatchDeleteDialog(false)}
+              disabled={deletingSelectedTokens}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              disabled={deletingSelectedTokens || selectedRows.size === 0}
+            >
+              {deletingSelectedTokens ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  删除中...
+                </>
+              ) : (
+                "确认删除"
               )}
             </Button>
           </DialogFooter>
