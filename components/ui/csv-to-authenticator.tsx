@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { CheckCircle, AlertCircle, Download, Upload, Import, QrCode, Database, Save } from "lucide-react";
 import { saveAuthenticatorToken, saveMultipleAuthenticatorTokens, AuthenticatorToken } from "@/app/actions/authenticator-actions";
+import { QRCodeSVG } from "qrcode.react";
 
 interface AuthenticatorEntry {
   name: string;
@@ -27,7 +28,7 @@ export default function CsvToAuthenticator() {
   const [csvContent, setCsvContent] = useState<string>("");
   const [parsedEntries, setParsedEntries] = useState<AuthenticatorEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrCodeUri, setQrCodeUri] = useState<string>("");
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<string>("upload");
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -164,9 +165,8 @@ export default function CsvToAuthenticator() {
       uri += `&period=${entry.period}`;
     }
 
-    // 使用Google Charts API生成QR码
-    const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(uri)}&choe=UTF-8`;
-    setQrCodeUrl(qrUrl);
+    // 存储URI用于客户端QR码生成
+    setQrCodeUri(uri);
   };
 
   const handleNext = () => {
@@ -194,7 +194,7 @@ export default function CsvToAuthenticator() {
     setCsvContent("");
     setParsedEntries([]);
     setError(null);
-    setQrCodeUrl(null);
+    setQrCodeUri("");
     setCurrentIndex(0);
     setSavedTokenIds(new Set());
     if (fileInputRef.current) {
@@ -299,6 +299,49 @@ export default function CsvToAuthenticator() {
 
   const isCurrentTokenSaved = savedTokenIds.has(currentIndex);
 
+  // 添加下载QR码图片功能
+  const handleDownloadQR = () => {
+    if (!qrCodeUri) return;
+    
+    const canvas = document.createElement("canvas");
+    const svgElement = document.getElementById("qr-code-svg");
+    
+    if (!svgElement) return;
+    
+    const svgData = new XMLSerializer().serializeToString(svgElement);
+    // 使用更安全的编码方法，处理Unicode字符
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    
+    const img = new Image();
+    
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      
+      // 释放对象URL
+      URL.revokeObjectURL(url);
+      
+      const pngFile = canvas.toDataURL("image/png");
+      
+      // 创建下载链接
+      const downloadLink = document.createElement("a");
+      const fileName = `${parsedEntries[currentIndex].name.replace(/[^\w\s]/gi, '_')}_qr.png`;
+      
+      downloadLink.download = fileName;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+    
+    img.src = url;
+  };
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <Card>
@@ -384,13 +427,23 @@ export default function CsvToAuthenticator() {
                       )}
                     </div>
 
-                    {qrCodeUrl && (
+                    {qrCodeUri && (
                       <div className="relative p-2 bg-white rounded-lg">
-                        <img
-                          src={qrCodeUrl}
-                          alt="Authentication QR Code"
-                          className="w-[250px] h-[250px]"
+                        <QRCodeSVG
+                          id="qr-code-svg"
+                          value={qrCodeUri}
+                          size={250}
+                          level="M"
                         />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 w-full"
+                          onClick={handleDownloadQR}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          下载QR码
+                        </Button>
                       </div>
                     )}
 
