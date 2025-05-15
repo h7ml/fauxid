@@ -10,8 +10,30 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { CheckCircle, AlertCircle, Download, Upload, Import, QrCode, Database, Save } from "lucide-react";
-import { saveAuthenticatorToken, saveMultipleAuthenticatorTokens, AuthenticatorToken } from "@/app/actions/authenticator-actions";
+import { 
+  CheckCircle, 
+  AlertCircle, 
+  Download, 
+  Upload, 
+  Import, 
+  QrCode, 
+  Database, 
+  Save, 
+  Copy, 
+  FileDown, 
+  FileUp, 
+  Clipboard, 
+  ClipboardCopy, 
+  RefreshCw,
+  AlertOctagon
+} from "lucide-react";
+import { 
+  saveAuthenticatorToken, 
+  saveMultipleAuthenticatorTokens, 
+  checkAndImportAuthenticatorTokens,
+  updateDuplicateAuthenticatorTokens,
+  AuthenticatorToken 
+} from "@/app/actions/authenticator-actions";
 import { QRCodeSVG } from "qrcode.react";
 
 interface AuthenticatorEntry {
@@ -24,6 +46,16 @@ interface AuthenticatorEntry {
   period?: number;
 }
 
+// 定义导入令牌的结果接口
+interface ImportResult {
+  newTokens: AuthenticatorEntry[];
+  duplicates: Array<{
+    existing: AuthenticatorToken;
+    new: AuthenticatorEntry;
+  }>;
+  selected: string[]; // 选中的要更新的重复项ID
+}
+
 export default function CsvToAuthenticator() {
   const [csvContent, setCsvContent] = useState<string>("");
   const [parsedEntries, setParsedEntries] = useState<AuthenticatorEntry[]>([]);
@@ -34,6 +66,20 @@ export default function CsvToAuthenticator() {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [savedTokenIds, setSavedTokenIds] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 导入导出相关状态
+  const [clipboardImportContent, setClipboardImportContent] = useState<string>("");
+  const [importFileInputRef, setImportFileInputRef] = useState<HTMLInputElement | null>(null);
+  const [exportFormat, setExportFormat] = useState<string>("json");
+  const [exportRange, setExportRange] = useState<string>("current");
+  const [fileExportFormat, setFileExportFormat] = useState<string>("json");
+  const [fileExportRange, setFileExportRange] = useState<string>("current");
+  const [isImporting, setIsImporting] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState<boolean>(false);
+  const [selectedTokensToImport, setSelectedTokensToImport] = useState<string[]>([]);
+  
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -353,11 +399,12 @@ export default function CsvToAuthenticator() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-2 mb-4">
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="upload">上传CSV</TabsTrigger>
               <TabsTrigger value="qrcodes" disabled={parsedEntries.length === 0}>
                 QR码 ({parsedEntries.length})
               </TabsTrigger>
+              <TabsTrigger value="import-export">导入/导出</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload">
@@ -531,6 +578,216 @@ export default function CsvToAuthenticator() {
                   </div>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="import-export">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* 剪贴板导入部分 */}
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <Clipboard className="mr-2 h-5 w-5" />
+                      剪贴板导入
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      从剪贴板导入认证令牌数据，支持JSON、CSV和OTP Auth URI格式
+                    </p>
+                    <Textarea
+                      placeholder="粘贴认证令牌数据..."
+                      className="min-h-[120px]"
+                      value={clipboardImportContent}
+                      onChange={handleClipboardImportChange}
+                    />
+                    <div className="flex justify-between">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleClearClipboardImport}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        清除
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={handleClipboardImport}
+                        disabled={isImporting || !clipboardImportContent.trim()}
+                      >
+                        {isImporting ? (
+                          <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            导入中...
+                          </>
+                        ) : (
+                          <>
+                            <Import className="mr-2 h-4 w-4" />
+                            导入数据
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 文件导入部分 */}
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <FileUp className="mr-2 h-5 w-5" />
+                      文件导入
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      从文件导入认证令牌数据，支持.json、.csv和.txt格式
+                    </p>
+                    <div className="grid w-full items-center gap-1.5">
+                      <Input
+                        id="import-file"
+                        type="file"
+                        accept=".json,.csv,.txt"
+                        onChange={handleFileImport}
+                        ref={(el) => setImportFileInputRef(el)}
+                        disabled={isImporting}
+                      />
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => document.getElementById('import-file')?.click()}
+                      disabled={isImporting}
+                    >
+                      {isImporting ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          导入中...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          上传并导入
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* 剪贴板导出部分 */}
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <ClipboardCopy className="mr-2 h-5 w-5" />
+                      剪贴板导出
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      将令牌信息导出到剪贴板，可选择格式和导出范围
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="export-format">导出格式</Label>
+                        <select 
+                          id="export-format" 
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                          value={exportFormat}
+                          onChange={(e) => setExportFormat(e.target.value)}
+                        >
+                          <option value="json">JSON (完整)</option>
+                          <option value="csv">CSV (基础)</option>
+                          <option value="uri">OTP URI (兼容)</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="export-range">导出范围</Label>
+                        <select 
+                          id="export-range" 
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                          value={exportRange}
+                          onChange={(e) => setExportRange(e.target.value)}
+                        >
+                          <option value="current">当前令牌</option>
+                          <option value="selected">选中令牌</option>
+                          <option value="all">全部令牌</option>
+                        </select>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={handleClipboardExport}
+                      disabled={isExporting || parsedEntries.length === 0}
+                    >
+                      {isExporting ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          导出中...
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="mr-2 h-4 w-4" />
+                          复制到剪贴板
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* 文件导出部分 */}
+                  <div className="space-y-3 border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold flex items-center">
+                      <FileDown className="mr-2 h-5 w-5" />
+                      文件导出
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      将令牌信息导出到文件，可选择格式和导出范围
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="file-export-format">导出格式</Label>
+                        <select 
+                          id="file-export-format" 
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                          value={fileExportFormat}
+                          onChange={(e) => setFileExportFormat(e.target.value)}
+                        >
+                          <option value="json">JSON 文件</option>
+                          <option value="csv">CSV 文件</option>
+                          <option value="txt">TXT 文件</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="file-export-range">导出范围</Label>
+                        <select 
+                          id="file-export-range" 
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                          value={fileExportRange}
+                          onChange={(e) => setFileExportRange(e.target.value)}
+                        >
+                          <option value="current">当前令牌</option>
+                          <option value="selected">选中令牌</option>
+                          <option value="all">全部令牌</option>
+                        </select>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={handleFileExport}
+                      disabled={isExporting || parsedEntries.length === 0}
+                    >
+                      {isExporting ? (
+                        <>
+                          <span className="animate-spin mr-2">⏳</span>
+                          导出中...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="mr-2 h-4 w-4" />
+                          下载文件
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Alert>
+                  <AlertOctagon className="h-4 w-4" />
+                  <AlertTitle>导入注意事项</AlertTitle>
+                  <AlertDescription>
+                    导入时会检查令牌是否已存在。如果发现重复项，系统会提示您选择更新现有记录或创建新记录。
+                  </AlertDescription>
+                </Alert>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
