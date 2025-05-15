@@ -25,7 +25,9 @@ import {
   Clipboard, 
   ClipboardCopy, 
   RefreshCw,
-  AlertOctagon
+  AlertOctagon,
+  Check,
+  X
 } from "lucide-react";
 import { 
   saveAuthenticatorToken, 
@@ -35,6 +37,8 @@ import {
   AuthenticatorToken 
 } from "@/app/actions/authenticator-actions";
 import { QRCodeSVG } from "qrcode.react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AuthenticatorEntry {
   name: string;
@@ -55,6 +59,110 @@ interface ImportResult {
   }>;
   selected: string[]; // 选中的要更新的重复项ID
 }
+
+// 添加的工具函数，用于解析OTP URI
+const parseOtpUri = (uri: string): AuthenticatorEntry | null => {
+  try {
+    // otpauth://totp/ISSUER:ACCOUNT?secret=SECRET&issuer=ISSUER&algorithm=SHA1&digits=6&period=30
+    const otpUriPattern = /^otpauth:\/\/(totp|hotp)\/([^?]+)\?(.+)$/i;
+    const match = uri.match(otpUriPattern);
+    
+    if (!match) return null;
+    
+    const [_, type, labelPart, queryPart] = match;
+    
+    // 解析查询参数
+    const params = new URLSearchParams(queryPart);
+    const secret = params.get('secret');
+    
+    if (!secret) return null;
+    
+    // 解析标签部分：可能是 "Issuer:Account" 或仅 "Account"
+    let name: string, issuer: string | undefined;
+    
+    if (labelPart.includes(':')) {
+      const parts = decodeURIComponent(labelPart).split(':');
+      issuer = parts[0];
+      name = parts[1];
+    } else {
+      name = decodeURIComponent(labelPart);
+      issuer = params.get('issuer') || undefined;
+    }
+    
+    // 如果URI中包含issuer参数，优先使用它
+    if (params.get('issuer')) {
+      issuer = params.get('issuer') || undefined;
+    }
+    
+    return {
+      name,
+      secret,
+      issuer,
+      type: type.toLowerCase(),
+      algorithm: (params.get('algorithm') || 'SHA1').toUpperCase(),
+      digits: params.get('digits') ? parseInt(params.get('digits')!) : 6,
+      period: params.get('period') ? parseInt(params.get('period')!) : 30
+    };
+  } catch (error) {
+    console.error('解析OTP URI时发生错误:', error);
+    return null;
+  }
+};
+
+// 解析JSON格式的令牌数据
+const parseJsonTokens = (jsonText: string): AuthenticatorEntry[] => {
+  try {
+    const parsed = JSON.parse(jsonText);
+    
+    // 如果是数组，直接处理
+    if (Array.isArray(parsed)) {
+      return parsed.filter(item => item.name && item.secret).map(item => ({
+        name: item.name,
+        secret: item.secret,
+        issuer: item.issuer,
+        type: item.type || "totp",
+        algorithm: item.algorithm || "SHA1",
+        digits: item.digits || 6,
+        period: item.period || 30
+      }));
+    }
+    
+    // 如果是单个对象，且有必要字段
+    if (parsed && typeof parsed === 'object' && parsed.name && parsed.secret) {
+      return [{
+        name: parsed.name,
+        secret: parsed.secret,
+        issuer: parsed.issuer,
+        type: parsed.type || "totp",
+        algorithm: parsed.algorithm || "SHA1",
+        digits: parsed.digits || 6,
+        period: parsed.period || 30
+      }];
+    }
+    
+    // 处理可能的嵌套结构，比如 {tokens: [...]}
+    if (parsed && typeof parsed === 'object') {
+      for (const key in parsed) {
+        if (Array.isArray(parsed[key]) && parsed[key].length > 0) {
+          return parsed[key].filter(item => item.name && item.secret).map(item => ({
+            name: item.name,
+            secret: item.secret,
+            issuer: item.issuer,
+            type: item.type || "totp",
+            algorithm: item.algorithm || "SHA1",
+            digits: item.digits || 6,
+            period: item.period || 30
+          }));
+        }
+      }
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('解析JSON数据时发生错误:', error);
+    return [];
+  }
+};
 
 export default function CsvToAuthenticator() {
   const [csvContent, setCsvContent] = useState<string>("");
@@ -386,6 +494,531 @@ export default function CsvToAuthenticator() {
     };
     
     img.src = url;
+  };
+
+  // 处理剪贴板文本变化
+  const handleClipboardImportChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setClipboardImportContent(e.target.value);
+  };
+
+  // 清除剪贴板导入内容
+  const handleClearClipboardImport = () => {
+    setClipboardImportContent("");
+  };
+
+  // 解析导入的文本数据
+  const parseImportContent = (content: string): AuthenticatorEntry[] => {
+    try {
+      setError(null);
+      let entries: AuthenticatorEntry[] = [];
+      
+      // 首先尝试解析为JSON
+      if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
+        entries = parseJsonTokens(content);
+        if (entries.length > 0) {
+          return entries;
+        }
+      }
+      
+      // 如果JSON解析失败，尝试解析为CSV
+      if (content.includes(',')) {
+        try {
+          // 使用现有的CSV解析函数
+          const tempEntries: AuthenticatorEntry[] = [];
+          const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+          
+          // 检查是否有内容
+          if (lines.length === 0) return [];
+          
+          // 分析表头（如果有）并找到相关列
+          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+          const nameIndex = headers.findIndex(h => ['name', 'account', '名称', '账户'].includes(h));
+          const secretIndex = headers.findIndex(h => ['secret', 'key', 'token', '密钥', '令牌'].includes(h));
+          const issuerIndex = headers.findIndex(h => ['issuer', 'provider', '发行者', '提供商'].includes(h));
+          
+          const hasHeaders = nameIndex !== -1 && secretIndex !== -1;
+          const startIndex = hasHeaders ? 1 : 0;
+          
+          // 处理每一行
+          for (let i = startIndex; i < lines.length; i++) {
+            const columns = lines[i].split(',').map(col => col.trim());
+            
+            if (hasHeaders) {
+              // 使用表头解析
+              const name = columns[nameIndex];
+              const secret = columns[secretIndex];
+              const issuer = issuerIndex !== -1 ? columns[issuerIndex] : undefined;
+              
+              if (name && secret) {
+                tempEntries.push({
+                  name,
+                  secret,
+                  issuer,
+                  type: "totp",
+                  algorithm: "SHA1",
+                  digits: 6,
+                  period: 30
+                });
+              }
+            } else {
+              // 假设CSV格式为: 名称,密钥,发行者(可选)
+              if (columns.length >= 2) {
+                const [name, secret, issuer] = columns;
+                tempEntries.push({
+                  name,
+                  secret,
+                  issuer,
+                  type: "totp",
+                  algorithm: "SHA1",
+                  digits: 6,
+                  period: 30
+                });
+              }
+            }
+          }
+          
+          if (tempEntries.length > 0) {
+            entries = tempEntries;
+            return entries;
+          }
+        } catch (e) {
+          console.error('CSV解析失败，尝试其他格式', e);
+        }
+      }
+      
+      // 尝试逐行解析OTP URI
+      if (content.includes('otpauth://')) {
+        const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+        for (const line of lines) {
+          if (line.startsWith('otpauth://')) {
+            const entry = parseOtpUri(line);
+            if (entry) {
+              entries.push(entry);
+            }
+          }
+        }
+        
+        if (entries.length > 0) {
+          return entries;
+        }
+      }
+      
+      // 单个OTP URI
+      if (content.trim().startsWith('otpauth://')) {
+        const entry = parseOtpUri(content.trim());
+        if (entry) {
+          entries.push(entry);
+          return entries;
+        }
+      }
+      
+      return entries;
+    } catch (error) {
+      console.error('解析导入内容时发生错误:', error);
+      return [];
+    }
+  };
+
+  // 处理从剪贴板导入
+  const handleClipboardImport = async () => {
+    if (!clipboardImportContent.trim()) return;
+    
+    try {
+      setIsImporting(true);
+      setError(null);
+      
+      // 解析导入内容
+      const importedEntries = parseImportContent(clipboardImportContent);
+      
+      if (importedEntries.length === 0) {
+        toast({
+          title: "导入失败",
+          description: "无法从提供的内容中解析出有效的令牌数据",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 转换为AuthenticatorToken格式
+      const tokensToImport: AuthenticatorToken[] = importedEntries.map(entry => ({
+        name: entry.name,
+        secret: entry.secret,
+        issuer: entry.issuer,
+        type: entry.type || "totp",
+        algorithm: entry.algorithm || "SHA1",
+        digits: entry.digits || 6,
+        period: entry.period || 30
+      }));
+      
+      // 检查是否有重复并导入
+      const result = await checkAndImportAuthenticatorTokens(tokensToImport);
+      
+      if (result.success) {
+        // 如果有重复项，显示处理对话框
+        if (result.duplicates && result.duplicates.length > 0) {
+          setImportResult({
+            newTokens: importedEntries,
+            duplicates: result.duplicates,
+            selected: []
+          });
+          setShowImportDialog(true);
+        } else {
+          // 没有重复项，导入成功
+          toast({
+            title: "导入成功",
+            description: `已成功导入 ${result.inserted?.length || 0} 个令牌`,
+          });
+          // 清空导入内容
+          setClipboardImportContent("");
+        }
+      } else {
+        toast({
+          title: "导入失败",
+          description: (result as { error: string }).error || "导入令牌时发生错误",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('剪贴板导入时发生错误:', error);
+      toast({
+        title: "导入失败",
+        description: "导入过程中发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // 处理文件导入
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        setIsImporting(true);
+        const content = event.target?.result as string;
+        
+        // 解析导入内容
+        const importedEntries = parseImportContent(content);
+        
+        if (importedEntries.length === 0) {
+          toast({
+            title: "导入失败",
+            description: "无法从文件中解析出有效的令牌数据",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // 转换为AuthenticatorToken格式
+        const tokensToImport: AuthenticatorToken[] = importedEntries.map(entry => ({
+          name: entry.name,
+          secret: entry.secret,
+          issuer: entry.issuer,
+          type: entry.type || "totp",
+          algorithm: entry.algorithm || "SHA1",
+          digits: entry.digits || 6,
+          period: entry.period || 30
+        }));
+        
+        // 检查是否有重复并导入
+        const result = await checkAndImportAuthenticatorTokens(tokensToImport);
+        
+        if (result.success) {
+          // 如果有重复项，显示处理对话框
+          if (result.duplicates && result.duplicates.length > 0) {
+            setImportResult({
+              newTokens: importedEntries,
+              duplicates: result.duplicates,
+              selected: []
+            });
+            setShowImportDialog(true);
+          } else {
+            // 没有重复项，导入成功
+            toast({
+              title: "导入成功",
+              description: `已成功导入 ${result.inserted?.length || 0} 个令牌`,
+            });
+            // 清空文件输入
+            if (importFileInputRef) {
+              importFileInputRef.value = "";
+            }
+          }
+        } else {
+          toast({
+            title: "导入失败",
+            description: (result as { error: string }).error || "导入令牌时发生错误",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error('文件导入时发生错误:', error);
+        toast({
+          title: "导入失败",
+          description: "导入过程中发生错误",
+          variant: "destructive",
+        });
+      } finally {
+        setIsImporting(false);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  // 处理导出令牌选择
+  const getTokensForExport = (range: string): AuthenticatorEntry[] => {
+    if (parsedEntries.length === 0) return [];
+    
+    switch (range) {
+      case "current":
+        return [parsedEntries[currentIndex]];
+      case "selected":
+        // 这里应该根据实际需求实现，例如通过多选框选择多个令牌
+        // 目前简化为返回当前令牌
+        return [parsedEntries[currentIndex]];
+      case "all":
+        return parsedEntries;
+      default:
+        return [parsedEntries[currentIndex]];
+    }
+  };
+
+  // 格式化令牌为导出格式
+  const formatTokensForExport = (tokens: AuthenticatorEntry[], format: string): string => {
+    switch (format) {
+      case "json":
+        return JSON.stringify(tokens, null, 2);
+      case "csv":
+        // 基础CSV格式: name,secret,issuer
+        const header = "name,secret,issuer";
+        const rows = tokens.map(token => 
+          `${token.name},${token.secret},${token.issuer || ""}`
+        );
+        return [header, ...rows].join("\n");
+      case "uri":
+        // 每行一个OTP URI
+        return tokens.map(token => {
+          // 生成otpauth URI
+          let uri = `otpauth://${token.type || 'totp'}/`;
+          
+          if (token.issuer) {
+            uri += `${encodeURIComponent(token.issuer)}:`;
+          }
+          
+          uri += `${encodeURIComponent(token.name)}?secret=${token.secret}`;
+          
+          if (token.issuer) {
+            uri += `&issuer=${encodeURIComponent(token.issuer)}`;
+          }
+          
+          if (token.algorithm) {
+            uri += `&algorithm=${token.algorithm}`;
+          }
+          
+          if (token.digits) {
+            uri += `&digits=${token.digits}`;
+          }
+          
+          if (token.period) {
+            uri += `&period=${token.period}`;
+          }
+          
+          return uri;
+        }).join("\n");
+      default:
+        return JSON.stringify(tokens, null, 2);
+    }
+  };
+
+  // 处理剪贴板导出
+  const handleClipboardExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      // 获取要导出的令牌
+      const tokensToExport = getTokensForExport(exportRange);
+      
+      if (tokensToExport.length === 0) {
+        toast({
+          title: "导出失败",
+          description: "没有可导出的令牌",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 格式化数据
+      const exportData = formatTokensForExport(tokensToExport, exportFormat);
+      
+      // 复制到剪贴板
+      await navigator.clipboard.writeText(exportData);
+      
+      toast({
+        title: "导出成功",
+        description: `已成功将 ${tokensToExport.length} 个令牌复制到剪贴板`,
+      });
+    } catch (error) {
+      console.error('复制到剪贴板时发生错误:', error);
+      toast({
+        title: "导出失败",
+        description: "复制到剪贴板时发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 处理文件导出
+  const handleFileExport = () => {
+    try {
+      setIsExporting(true);
+      
+      // 获取要导出的令牌
+      const tokensToExport = getTokensForExport(fileExportRange);
+      
+      if (tokensToExport.length === 0) {
+        toast({
+          title: "导出失败",
+          description: "没有可导出的令牌",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // 格式化数据
+      const exportData = formatTokensForExport(tokensToExport, fileExportFormat);
+      
+      // 创建下载链接
+      const blob = new Blob([exportData], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      
+      // 设置文件名和扩展名
+      let fileExtension = ".txt";
+      switch (fileExportFormat) {
+        case "json":
+          fileExtension = ".json";
+          break;
+        case "csv":
+          fileExtension = ".csv";
+          break;
+        default:
+          fileExtension = ".txt";
+      }
+      
+      // 如果只导出当前令牌，使用令牌名称作为文件名
+      let fileName = "authenticator_tokens";
+      if (fileExportRange === "current" && tokensToExport.length === 1) {
+        fileName = tokensToExport[0].name.replace(/[^\w\s]/gi, '_');
+      }
+      
+      downloadLink.download = `${fileName}${fileExtension}`;
+      downloadLink.href = url;
+      downloadLink.click();
+      
+      // 释放URL对象
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "导出成功",
+        description: `已成功导出 ${tokensToExport.length} 个令牌到文件`,
+      });
+    } catch (error) {
+      console.error('导出文件时发生错误:', error);
+      toast({
+        title: "导出失败",
+        description: "导出文件时发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 处理重复项的更新
+  const handleUpdateDuplicates = async () => {
+    if (!importResult || selectedTokensToImport.length === 0) return;
+    
+    try {
+      setIsImporting(true);
+      
+      // 准备要更新的重复项
+      const duplicatesToUpdate = selectedTokensToImport.map(id => {
+        const duplicate = importResult.duplicates.find(d => d.existing.id === id);
+        if (!duplicate) return null;
+        
+        return {
+          existingId: id,
+          token: duplicate.new
+        };
+      }).filter(Boolean) as { existingId: string, token: AuthenticatorToken }[];
+      
+      if (duplicatesToUpdate.length === 0) return;
+      
+      // 调用API更新重复项
+      const result = await updateDuplicateAuthenticatorTokens(duplicatesToUpdate);
+      
+      if (result.success) {
+        toast({
+          title: "更新成功",
+          description: `已成功更新 ${result.updated?.length || 0} 个令牌`,
+        });
+        
+        // 关闭对话框并清空状态
+        setShowImportDialog(false);
+        setImportResult(null);
+        setSelectedTokensToImport([]);
+      } else {
+        toast({
+          title: "更新失败",
+          description: (result as { error: string }).error || "更新令牌时发生错误",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('更新重复令牌时发生错误:', error);
+      toast({
+        title: "更新失败",
+        description: "更新过程中发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // 切换选择重复项
+  const toggleDuplicateSelection = (id: string) => {
+    setSelectedTokensToImport(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(itemId => itemId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // 选择全部重复项
+  const selectAllDuplicates = () => {
+    if (!importResult) return;
+    setSelectedTokensToImport(importResult.duplicates.map(d => d.existing.id!));
+  };
+
+  // 取消选择全部重复项
+  const deselectAllDuplicates = () => {
+    setSelectedTokensToImport([]);
+  };
+
+  // 关闭导入对话框
+  const handleCloseImportDialog = () => {
+    setShowImportDialog(false);
+    setImportResult(null);
+    setSelectedTokensToImport([]);
   };
 
   return (
@@ -797,6 +1430,73 @@ export default function CsvToAuthenticator() {
           </p>
         </CardFooter>
       </Card>
+
+      {/* 导入重复项处理对话框 */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>处理重复的令牌</DialogTitle>
+            <DialogDescription>
+              发现以下令牌已存在，请选择需要更新的项目。未选择的项目将保持不变。
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="flex justify-between mb-2">
+              <Button variant="outline" size="sm" onClick={selectAllDuplicates}>
+                全选
+              </Button>
+              <Button variant="outline" size="sm" onClick={deselectAllDuplicates}>
+                取消全选
+              </Button>
+            </div>
+            
+            <div className="max-h-[300px] overflow-y-auto border rounded-md">
+              {importResult?.duplicates.map((item, index) => (
+                <div
+                  key={item.existing.id}
+                  className={`flex items-center justify-between p-3 ${
+                    index !== importResult.duplicates.length - 1 ? "border-b" : ""
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`token-${item.existing.id}`}
+                      checked={selectedTokensToImport.includes(item.existing.id!)}
+                      onCheckedChange={() => toggleDuplicateSelection(item.existing.id!)}
+                    />
+                    <div>
+                      <label
+                        htmlFor={`token-${item.existing.id}`}
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        {item.existing.name}
+                      </label>
+                      {item.existing.issuer && (
+                        <p className="text-xs text-muted-foreground">
+                          {item.existing.issuer}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseImportDialog}>
+              取消
+            </Button>
+            <Button
+              onClick={handleUpdateDuplicates}
+              disabled={selectedTokensToImport.length === 0}
+            >
+              更新选中项
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 
